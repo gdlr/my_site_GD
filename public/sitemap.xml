@@ -33,6 +33,31 @@
   </url>
   
   <url>
+    <loc>/tags/awesome/</loc>
+    <lastmod>2020-01-09T15:02:28-08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/tags/cool/</loc>
+    <lastmod>2020-01-09T15:02:28-08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/project/</loc>
+    <lastmod>2020-01-09T15:02:28-08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/tags/</loc>
+    <lastmod>2020-01-09T15:02:28-08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/project/my_new_project/</loc>
+    <lastmod>2020-01-09T15:02:28-08:00</lastmod>
+  </url>
+  
+  <url>
     <loc>/post/</loc>
     <lastmod>2019-09-05T00:00:00+00:00</lastmod>
   </url>
@@ -78,11 +103,6 @@
   </url>
   
   <url>
-    <loc>/tags/</loc>
-    <lastmod>2019-04-17T00:00:00+00:00</lastmod>
-  </url>
-  
-  <url>
     <loc>/post/jupyter/</loc>
     <lastmod>2019-09-05T00:00:00+00:00</lastmod>
   </url>
@@ -124,11 +144,6 @@
   
   <url>
     <loc>/project/internal-project/</loc>
-    <lastmod>2016-04-27T00:00:00+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>/project/</loc>
     <lastmod>2016-04-27T00:00:00+00:00</lastmod>
   </url>
   
@@ -200,6 +215,10 @@
   <url>
     <loc>/publication/conference-paper/</loc>
     <lastmod>2013-07-01T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/project/awesome_project/</loc>
   </url>
   
   <url>

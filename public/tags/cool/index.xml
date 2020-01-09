@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>cool | This site is awesome!</title>
+    <link>/tags/cool/</link>
+      <atom:link href="/tags/cool/index.xml" rel="self" type="application/rss+xml" />
+    <description>cool</description>
+    <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator><language>en-us</language><lastBuildDate>Thu, 09 Jan 2020 00:00:00 +0000</lastBuildDate>
+    <image>
+      <url>/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_512x512_fill_lanczos_center_2.png</url>
+      <title>cool</title>
+      <link>/tags/cool/</link>
+    </image>
+    
+    <item>
+      <title>yeeeeew!</title>
+      <link>/project/my_new_project/</link>
+      <pubDate>Thu, 09 Jan 2020 00:00:00 +0000</pubDate>
+      <guid>/project/my_new_project/</guid>
+      <description>
+
+
+&lt;p&gt;Here’s some sweet code!&lt;/p&gt;
+&lt;p&gt;An amazing plot!&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;plot(cars)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/project/my_new_project/index_files/figure-html/unnamed-chunk-1-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>
