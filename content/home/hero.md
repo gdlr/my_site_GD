@@ -24,7 +24,7 @@ hero_media = ""
   # gradient_end = "#2b94c3"
   
   # Background image.
-   image = header_photo.jpg  # Name of image in `static/img/`.
+   image = "header_photo.jpg"  # Name of image in `static/img/`.
    image_darken = 0  # Darken the image? Range 0-1 where 0 is transparent and 1 is opaque.
    image_size = "cover"  #  Options are `cover` (default), `contain`, or `actual` size.
    [design.spacing]
