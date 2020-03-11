@@ -1,0 +1,142 @@
+---
+title: "ggplot2 - graphing Mono Lake data!"
+author: "Gabriel De La Rosa"
+date: "3/11/2020"
+output: html_document
+---
+
+
+
+<div id="making-a-publication-quality-graph-of-mono-lake-levels-over-time" class="section level2">
+<h2>Making a publication quality graph of Mono Lake levels over time</h2>
+<p>Mono Lake is a mid elevation lake in the Owens Valley, California. In the 20th century, the Owens River became an important water source for Los Angeles, and Mono Lake water levels dropped significantly. Lake level monitoring started in (<a href="https://www.monobasinresearch.org/data/levelyearly.php" class="uri">https://www.monobasinresearch.org/data/levelyearly.php</a>)[1850], and a clean data set gives us the opportunity to practice our ggplot skills!</p>
+<div id="first-well-do-a-bit-of-wrangling-with-the-tidyverse-and-the-awesome-janitor-package" class="section level3">
+<h3>First, we’ll do a bit of wrangling with the tidyverse and the awesome <code>janitor</code> package:</h3>
+<pre class="r"><code># Load packages
+
+library(tidyverse)
+library(janitor)
+
+# Load in data
+
+mono_lake_annual_levels &lt;- read_csv(&quot;Mono Lake Annual Levels.csv&quot;,
+                                    skip = 5)</code></pre>
+<p>Currently, the years are considered characters by <code>r</code>. For our purposes, we can just convert them to numbers.</p>
+<pre class="r"><code># Clean data
+
+clean_mono_levels &lt;- mono_lake_annual_levels %&gt;% 
+  clean_names() %&gt;% 
+  mutate(year = as.numeric(year))</code></pre>
+</div>
+<div id="lets-make-a-graph" class="section level3">
+<h3>Let’s make a graph!</h3>
+<pre class="r"><code># ggplot begins simple...
+
+ggplot(data = clean_mono_levels, 
+       aes(x = year, 
+           y = lake_level_feet_above_sea_level)
+       ) +
+  
+  labs(x = &quot;Year&quot;,
+       y = &quot;Lake level\n(Feet above sea level)&quot;,
+       title = &quot;Mono Lake Levels, 1850-2017&quot;
+       ) +
+  
+  geom_line(color = &quot;skyblue4&quot;,
+            size = 1) +
+  
+  # Ribbon plots let us fill in the lake level, for a more intuitive volume feel
+  
+  geom_ribbon(aes(ymin = 6355,
+                  ymax = lake_level_feet_above_sea_level),
+              fill = &quot;powderblue&quot;) +
+  
+  theme_bw() +
+  
+  # We can change the background and margin color with arguments in `theme`
+  
+  theme(panel.background = element_rect(fill = &quot;azure1&quot;),
+        panel.border = element_rect(fill = NA),
+        plot.background = element_rect(fill = &quot;oldlace&quot;),
+        
+        # And change the border width
+        
+        plot.margin = margin(t = 0.6,
+                             r = 0.6,
+                             b = 0.6,
+                             l = 0.6,
+                             unit = &quot;cm&quot;),
+        
+        # And add a few adjustments to the title text
+        plot.title = element_text(face = &quot;bold&quot;,
+                                  hjust = 0.5,
+                                  size = 15,
+                                  color = &quot;grey30&quot;),
+        ) +
+  
+  # One thing ggplot annoyingly does is expand the axes beyond your limits. We can change this using the `expand = c(0,0)` argument
+  
+  scale_x_continuous(limits = c(1850, 2017), 
+                     breaks = c(1850, 1875, 1900, 1925, 1950, 1975, 2000, 2017),
+                     expand = c(0, 0))+
+  scale_y_continuous(limits = c(6355, 6440), 
+                     expand = c(0, 0),
+                     breaks = seq(6350, 6430, 20)
+                     ) +
+  
+  # For easier interpretation, we can add a few important annotations highlighting events:
+  
+  annotate(&quot;text&quot;, 
+           label = &quot;1941:\n LA begins diverting water&quot;, 
+           y = 6430, 
+           x = 1939,
+           hjust = 0,
+           size = 3.5,
+           color = &quot;indianred4&quot;) +
+  
+  # And add some reference lines
+  
+  geom_line(aes(y = 6360),
+            color = &quot;indianred3&quot;,
+            linetype = &quot;dotted&quot;) +
+  
+  annotate(&quot;text&quot;,
+           label = &quot;6,377 ft: land bridges emerge&quot;,
+           x = 1852,
+           y = 6375,
+           color = &quot;tomato4&quot;,
+           size = 3,
+           hjust = 0) +
+  
+  geom_line(aes(y = 6377),
+            color = &quot;indianred3&quot;,
+            alpha = 1,
+            linetype = &quot;dotted&quot;) +
+  
+  annotate(&quot;text&quot;,
+           label = &quot;6360 ft: birds threatened&quot;,
+           x = 1852,
+           y = 6358,
+           color = &quot;tomato4&quot;,
+           size = 3,
+           hjust = 0) +
+  
+  # geom_segment has an option to create an arrow!
+  
+  geom_segment(aes(x = 1941, 
+                   xend = 1941,
+                   y = 6419, 
+                   yend = 6426),
+               color = &quot;indianred4&quot;,
+               arrow = arrow(ends = &quot;first&quot;,
+                             type = &quot;open&quot;,
+                             length = unit(0.2,&quot;cm&quot;)
+                             )
+               )</code></pre>
+<p><img src="/project/a3_task1/index_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<pre class="r"><code># And when we&#39;re done, we can save the plot using ggsave.
+
+ggsave(&quot;good_graph.png&quot;, last_plot())</code></pre>
+<p><img src="good_graph.png" /></p>
+</div>
+</div>
