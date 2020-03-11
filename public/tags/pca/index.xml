@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>PCA | Gabriel De La Rosa</title>
+    <link>/tags/pca/</link>
+      <atom:link href="/tags/pca/index.xml" rel="self" type="application/rss+xml" />
+    <description>PCA</description>
+    <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator><language>en-us</language><lastBuildDate>Tue, 10 Mar 2020 00:00:00 +0000</lastBuildDate>
+    <image>
+      <url>/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_512x512_fill_lanczos_center_2.png</url>
+      <title>PCA</title>
+      <link>/tags/pca/</link>
+    </image>
+    
+    <item>
+      <title>PCA for world environmental variables</title>
+      <link>/project/pca/pca/</link>
+      <pubDate>Tue, 10 Mar 2020 00:00:00 +0000</pubDate>
+      <guid>/project/pca/pca/</guid>
+      <description>
+
+
+&lt;div id=&#34;exploring-relationships-between-countries-environmental-variables&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Exploring relationships between countries’ environmental variables&lt;/h2&gt;
+&lt;p&gt;On a global scale, countries vary in many environmental factors, such as temperature, precipitation, and elevation. To explore correlations between nine different environmental variables, I performed a Principal Component Analysis on a dataset of environmental values by country compiled from the &lt;a href=&#34;https://earthengine.google.com/&#34;&gt;Google Earth Engine&lt;/a&gt; by &lt;a href=&#34;https://www.kaggle.com/zanderventer/environmental-variables-for-world-countries&#34;&gt;Zander Venter&lt;/a&gt;. These data are non-normalized summary statistics calculated from remote sensing data.&lt;/p&gt;
+&lt;div id=&#34;wrangling-and-data-exploration&#34; class=&#34;section level3&#34;&gt;
+&lt;h3&gt;Wrangling and data exploration&lt;/h3&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Install necessary packages. 
+
+library(tidyverse)
+library(janitor)
+library(naniar) 
+library(VIM) 
+library(skimr)
+library(ggfortify)
+library(here)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Read in the data
+
+env_data &amp;lt;- read_csv(here(&amp;quot;data&amp;quot;, &amp;quot;world_env_vars.csv&amp;quot;))
+
+# Explore the data set for missingness
+
+gg_miss_var(env_data)
+matrixplot(env_data)
+skim(env_data)
+
+#Maybe wind isn&amp;#39;t a great variable to use...55 missings. The others have just a few missing values. Tree canopy cover has 11, but I&amp;#39;ll keep it. To run PCA, you can&amp;#39;t have any NA&amp;#39;s, and I&amp;#39;d rather not have a wind variable than remove 11 full countries&amp;#39; data.
+
+# So, I&amp;#39;ll drop the wind column, and then the remaining NA&amp;#39;s
+
+env_subset &amp;lt;- env_data %&amp;gt;% 
+  select(-wind, -Country) %&amp;gt;% 
+  drop_na()
+
+# I&amp;#39;m going to pare the data down to first reduce redundancy (like mean rainfall, max quarterly rainfall) and to select just a few environmental varaibles that I think might be correlated. 
+
+# I&amp;#39;ve chosen elevation, aspect, slope, cropland cover, tree cover, isothermality (how variable a country&amp;#39;s yearly temperature fluxuations are), annual rainfall, annual temperature, and number of cloudy days.
+
+env_subset_2 &amp;lt;- env_subset %&amp;gt;% 
+  select(elevation, aspect, slope, cropland_cover, tree_canopy_cover, isothermality, rain_mean_annual, temp_mean_annual, cloudiness) %&amp;gt;% 
+  rename(&amp;quot;cropland cover&amp;quot; = cropland_cover,
+         &amp;quot;tree canopy cover&amp;quot; = tree_canopy_cover,
+         &amp;quot;annual mean rainfall&amp;quot; = rain_mean_annual,
+         &amp;quot;annual mean temperature&amp;quot; = temp_mean_annual)&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div id=&#34;running-a-principal-component-analysis-for-a-select-few-variables&#34; class=&#34;section level3&#34;&gt;
+&lt;h3&gt;Running a Principal Component Analysis for a select few variables:&lt;/h3&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# And I can now run a PCA
+
+env_pca_2 &amp;lt;- prcomp(env_subset_2, scale = TRUE)
+
+env_pca_2
+
+screeplot(env_pca_2)
+
+# And visualize it...
+
+biplot_2 &amp;lt;- autoplot(env_pca_2,
+                      colour = NA,
+                      loadings.label = TRUE,
+                      loadings.label.size = 3,
+                      loadings.label.colour = &amp;quot;black&amp;quot;,
+                      loadings.label.repel = TRUE) +
+  scale_y_continuous(limits = c(-0.2, 0.2)) +
+  scale_x_continuous(limits = c(-0.15,0.1)) +
+  theme_bw() +
+  labs(title = &amp;quot;Principal Component Analysis of Environmental Variables&amp;quot;)
+
+biplot_2
+
+ggsave(&amp;quot;env_biplot.png&amp;quot;, plot = biplot_2)&lt;/code&gt;&lt;/pre&gt;
+&lt;div class=&#34;figure&#34;&gt;
+&lt;img src=&#34;/img/env_biplot.png&#34; alt=&#34;Fig. 1 Principal component analysis comparing country’s mean elevation, mean slope, percent cropland cover, percent tree cover,yearly temperature variability (isothermality), mean annual rainfall, mean annual temperature, and average cloudy days per year. Principal components 1 and 2 explain 58% of variance in the data&#34; /&gt;
+&lt;p class=&#34;caption&#34;&gt;&lt;strong&gt;Fig. 1&lt;/strong&gt; &lt;em&gt;Principal component analysis comparing country’s mean elevation, mean slope, percent cropland cover, percent tree cover,yearly temperature variability (isothermality), mean annual rainfall, mean annual temperature, and average cloudy days per year. Principal components 1 and 2 explain 58% of variance in the data&lt;/em&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;p&gt;A principal component analysis reveals a few revealing correlations:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;annual mean temperature is strongly negatively correlated with elevation&lt;/li&gt;
+&lt;li&gt;the percentage of a country covered by cropland is negatively correlated with isothermality&lt;/li&gt;
+&lt;li&gt;cloudiness, tree canopy cover, and mean rainfall are positively correlated&lt;/li&gt;
+&lt;li&gt;elevation and cropland cover are somewhat positively correlated&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Though interesting, these data are somewhat problematic: country size varies greatly on a global scale, and environmental conditions vary widely within larger countries. Binning countries by size or breaking down larger countries into smaller regions may better elucidate correlations between other variables.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>

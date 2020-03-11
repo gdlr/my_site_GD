@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Time series | Gabriel De La Rosa</title>
+    <link>/tags/time-series/</link>
+      <atom:link href="/tags/time-series/index.xml" rel="self" type="application/rss+xml" />
+    <description>Time series</description>
+    <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator><language>en-us</language><lastBuildDate>Thu, 09 Jan 2020 15:02:28 -0800</lastBuildDate>
+    <image>
+      <url>/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_512x512_fill_lanczos_center_2.png</url>
+      <title>Time series</title>
+      <link>/tags/time-series/</link>
+    </image>
+    
+    <item>
+      <title>Steelhead Passage through Bonneville Dam, Oregon</title>
+      <link>/project/steelhead/my_new_project/</link>
+      <pubDate>Thu, 09 Jan 2020 15:02:28 -0800</pubDate>
+      <guid>/project/steelhead/my_new_project/</guid>
+      <description>
+
+
+&lt;div id=&#34;introduction&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Introduction&lt;/h2&gt;
+&lt;p&gt;Bonneville Dam, Oregon has collected 80 years of steelhead counts from its fish ladder, beginning in 1939. Steelhead are sea run rainbow trout (&lt;em&gt;Oncorhynhus mykiss&lt;/em&gt;), and were significantly affected by dam development and river alteration in the 20th century. Here, I explore counts of the endangered species over all years for the Bonneville Dam.&lt;/p&gt;
+&lt;p&gt;Data was provided by the &lt;a href=&#34;http://www.cbr.washington.edu/dart/metadata/adult&#34;&gt;University of Washington DART&lt;/a&gt; program, and collected by the &lt;a href=&#34;https://www.nwd.usace.army.mil/&#34;&gt;Army Corps of Engineers&lt;/a&gt;.&lt;/p&gt;
+&lt;div class=&#34;figure&#34;&gt;
+&lt;img src=&#34;/img/steelhead.jpg&#34; alt=&#34;Steelhead trout. Photo: NOAA Fisheries&#34; /&gt;
+&lt;p class=&#34;caption&#34;&gt;Steelhead trout. Photo: NOAA Fisheries&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&#34;figure&#34;&gt;
+&lt;img src=&#34;/img/bon_dam.jpg&#34; alt=&#34;Bonneville Dam,Oregon. Photo: Richard Walker&#34; /&gt;
+&lt;p class=&#34;caption&#34;&gt;Bonneville Dam,Oregon. Photo: Richard Walker&lt;/p&gt;
+&lt;/div&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;fish &amp;lt;- read_csv(here(&amp;quot;data&amp;quot;, &amp;quot;cbr_fish_passage_bonneville_allyrs_steelhead.csv&amp;quot;)) %&amp;gt;% 
+  clean_names()&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Clean up these dates with the lubridate:: package
+fish_clean &amp;lt;- fish %&amp;gt;% 
+  mutate(day_month = str_c(fish$year, fish$mm_dd, sep = &amp;#39;-&amp;#39;)) %&amp;gt;% 
+  mutate(date = lubridate::ydm(day_month)) %&amp;gt;% 
+  mutate(year = lubridate::year(date)) %&amp;gt;% 
+  mutate(month = lubridate::month(date, label = TRUE)) %&amp;gt;% 
+  drop_na()&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;daily_ct &amp;lt;- ggplot(data = fish_clean, aes(x = date, y = value)) +
+  geom_line() +
+  theme_bw() +
+  scale_x_date(expand = c(0,0)) +
+  scale_y_continuous(expand = c(0,0), limits = c(0, 35000)) +
+  labs(title = &amp;quot;Daily Steelhead count data, Bonneville Dam&amp;quot;, x = &amp;quot;Year&amp;quot;, y = &amp;quot;Count&amp;quot;)
+
+ggsave(&amp;quot;daily_ct.png&amp;quot;, plot = daily_ct)&lt;/code&gt;&lt;/pre&gt;
+&lt;div class=&#34;figure&#34;&gt;
+&lt;img src=&#34;/img/daily_ct.png&#34; alt=&#34;Fig. 1 Daily counts for steelhead at the Bonneville Dam for all years.&#34; /&gt;
+&lt;p class=&#34;caption&#34;&gt;&lt;strong&gt;Fig. 1&lt;/strong&gt; &lt;em&gt;Daily counts for steelhead at the Bonneville Dam for all years.&lt;/em&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;p&gt;A plot of daily counts over the whole time frame suggests that steelhead passage is seasonal.Each year appears to have a spike where steelhead migration is high. We can explore seasonality in a season plot:&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# First, make a summary data frame with total counts per date and parsed year and month
+
+fish_count &amp;lt;- fish_clean %&amp;gt;% 
+  group_by(date) %&amp;gt;% 
+  summarize(value = sum(value)) %&amp;gt;% 
+  mutate(year = year(date),
+         month = month(date, label = TRUE)) %&amp;gt;% 
+  mutate(month_sep = str_c(year, month, sep = &amp;#39;-&amp;#39;)) %&amp;gt;% 
+  mutate(y_m = tsibble::yearmonth(month_sep))
+
+## Let&amp;#39;s take monthly means so it&amp;#39;s clearer...
+
+fish_sum &amp;lt;- fish_count %&amp;gt;% 
+  group_by(year, month) %&amp;gt;% 
+  summarize(value = sum(value)) %&amp;gt;% 
+  mutate(month_sep = str_c(year, month, sep = &amp;#39;-&amp;#39;)) %&amp;gt;% 
+  mutate(y_m = tsibble::yearmonth(month_sep))
+
+# Then, plot it as a season plot!
+
+season_plot &amp;lt;- ggplot(data = fish_sum, aes(x = month, y = value, group = year)) +
+  geom_line(aes(color = year)) +
+  
+  scale_color_continuous(low = &amp;quot;blue&amp;quot;, high = &amp;quot;red&amp;quot;) +
+  
+  scale_x_discrete(expand = c(0,0)) +
+  scale_y_continuous(limits = c(0,400000), expand = c(0,0)) +
+  
+  theme_bw() +
+  labs(title = &amp;quot;Season plot for Steelhead counts&amp;quot;, 
+       x = &amp;quot;Month&amp;quot;, 
+       y = &amp;quot;Count&amp;quot;,
+       color = &amp;quot;Year&amp;quot;)
+
+ggsave(&amp;quot;season.png&amp;quot;, plot = season_plot)&lt;/code&gt;&lt;/pre&gt;
+&lt;div class=&#34;figure&#34;&gt;
+&lt;img src=&#34;/img/season.png&#34; alt=&#34;Fig 2. Season plot for steelhead counts. Each line represents one year of data. Counts are total counts per month. Data from 1939-2019.&#34; /&gt;
+&lt;p class=&#34;caption&#34;&gt;&lt;strong&gt;Fig 2.&lt;/strong&gt; &lt;em&gt;Season plot for steelhead counts. Each line represents one year of data. Counts are total counts per month. Data from 1939-2019.&lt;/em&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;p&gt;A season plot shows that steelhead pass through the Bonneville Dam mainly during summer months. It also indicates that steelhead counts have changed through the years, and seem more abundant recently. We can explore this by plotting yearly counts:&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# What about annual counts?
+
+fish_ann &amp;lt;- fish_count %&amp;gt;%
+  group_by(year) %&amp;gt;% 
+  summarize(count = sum(value))
+
+ann_ct &amp;lt;- ggplot(fish_ann, aes(x = year, y = count)) +
+  geom_line() +
+  theme_bw() +
+  labs(title = &amp;quot;Changes in annual steelhead counts&amp;quot;,
+       x = &amp;quot;Year&amp;quot;, y = &amp;quot;Count&amp;quot;) +
+  scale_x_continuous(expand = c(0,0))
+
+ggsave(&amp;quot;ann_ct.png&amp;quot;, plot = ann_ct)&lt;/code&gt;&lt;/pre&gt;
+&lt;div class=&#34;figure&#34;&gt;
+&lt;img src=&#34;/img/ann_ct.png&#34; alt=&#34;Fig 3. Total steelhead counts per year&#34; /&gt;
+&lt;p class=&#34;caption&#34;&gt;&lt;strong&gt;Fig 3.&lt;/strong&gt; &lt;em&gt;Total steelhead counts per year&lt;/em&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;p&gt;This plot shows that steelhead numbers have, in general, increased through time.&lt;/p&gt;
+&lt;/div&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>

@@ -1,0 +1,415 @@
+---
+title: "Snowshoe Hares in Bonanza Creek"
+author: "Gabriel De La Rosa"
+date: "2/1/2020"
+output: html_document
+slug: my_new_project
+categories: []
+tags:
+  - Ridgeline plot
+  - data exploration
+subtitle: ''
+summary: ''
+authors: []
+lastmod: '2020-01-09T15:02:28-08:00'
+featured: no
+thumbnail:
+image:
+  caption: ''
+  focal_point: ''
+  preview_only: no
+projects: []
+---
+
+<script src="/rmarkdown-libs/kePrint/kePrint.js"></script>
+
+
+<div id="exploring-snowshoe-hare-population-in-the-bonanza-creek-experimental-forest" class="section level2">
+<h2>Exploring Snowshoe Hare population in the Bonanza Creek Experimental Forest</h2>
+<p>Snowshoe Hares are a keystone prey species in boreal forests. Snowshoe hare population density influences the ecosystem in both bottom-up and top-down ways: hare population density is linked to both vegetation abundance and predator abundance (Stenseth et al, 1997). Here, snowshoe hare weights and population density are compared through time.</p>
+<p>Data were obtained from the <a href="https://portal.lternet.edu/nis/metadataviewer?packageid=knb-lter-bnz.55.22">Bonanza Creek Experimental Forest Long Term Ecological Research Program</a>.</p>
+<div class="figure">
+<img src="/img/baby_hare.jpg" alt="Baby snowshoe hare. NPS Photo" />
+<p class="caption">Baby snowshoe hare. NPS Photo</p>
+</div>
+<div id="results" class="section level3">
+<h3>Results</h3>
+<pre class="r"><code># Read in necessary packages
+
+library(tidyverse)
+library(janitor)
+library(lubridate)
+library(gridExtra)
+library(ggridges)
+library(naniar)
+library(ggpubr)
+library(viridis)
+library(kableExtra)
+library(here)</code></pre>
+<pre class="r"><code># Read in the data
+
+snowshoe &lt;- read_csv(here(&quot;data&quot;, &quot;showshoe_lter.csv&quot;)) %&gt;% 
+  select(-time)
+  
+# Make dates dates, and clean up some entries
+
+snowshoe_date &lt;- snowshoe %&gt;% 
+  mutate(date = mdy(date)) %&gt;% 
+  mutate(month = month(date)) %&gt;% 
+  mutate(year = year(date)) %&gt;% 
+  mutate(grid = tolower(grid)) %&gt;% 
+  mutate(age = tolower(age)) %&gt;% 
+  mutate(sex = tolower(sex))</code></pre>
+<pre class="r"><code># Let&#39;s explore snowshoe hare weights over time
+# Select for just weight and dates
+
+weight_yr &lt;- snowshoe_date %&gt;% 
+  select(date, weight, year)
+
+# And, I&#39;ll just explore this with a quick histogram
+
+ggplot(data = weight_yr, aes(x = weight)) +
+  geom_histogram()
+
+# And then break weight distribution down by year using a ridgeline plot
+
+weight_plot &lt;- 
+ggplot(data = weight_yr, aes(x = weight, 
+                               y = fct_rev(as.factor(year)), 
+                               fill = stat(x))
+       ) +
+    
+  geom_density_ridges_gradient(scale = 3,
+                      rel_min_height = 0.01) +
+  theme_bw() +
+  
+  labs(y = &quot;&quot;,
+       x = &quot;Weight (g)&quot;) +
+  
+  theme(legend.position = &quot;null&quot;,
+        axis.text.x = element_text(hjust = 0.8)) +
+  
+  scale_fill_viridis() +
+  
+  scale_x_continuous(limits = c(0, 2500), 
+                     expand = c(0,0))
+  
+
+# This would be cool with a total population size plot next to it
+# Let&#39;s count the observations per year
+
+year_count &lt;- weight_yr %&gt;% 
+  group_by(year) %&gt;% 
+  count()
+
+# Then plot 
+
+year_plot &lt;- 
+
+  ggplot(data = year_count, aes(x = year, y = n)) +
+  geom_line() +
+  
+  coord_flip() + 
+  theme_bw() +
+  scale_x_reverse(limits = c(2012.6, 1995),
+                  expand = c(0,0),
+                  breaks = seq(from = 2101, to = 1998, by = -1))+
+    
+  scale_y_continuous(breaks = c(0, 250, 500),
+                     limits = c(0, 500),
+                     expand = c(0,0)) +
+  labs(x = &quot;&quot;,
+       y = &quot;Count&quot;) +
+  theme(axis.text.x = element_text(hjust = 0.8))
+
+# Put the plots next to each other using ggarrange()
+
+wt_count &lt;- 
+  
+ggarrange(weight_plot,
+          year_plot,
+          ncol = 2,
+          widths = c(3,1))
+
+# Then add a title using fig_annotate
+
+fig_annotate &lt;- annotate_figure(wt_count,
+                top = text_grob(&quot;Snowshoe hare weights and counts, 1998-2012&quot;, 
+                                size = 14,
+                                face = &quot;bold&quot;))
+
+fig_annotate
+
+ggsave(&quot;wt_fig.png&quot;, plot = fig_annotate)</code></pre>
+<div class="figure">
+<img src="/img/wt_fig.png" alt="Fig. 1 Density plot showing snowshoe hare weight distrubutions per year, from 1998 to 2012 (left plot). Second plot shows total counted hares per year (right plot)." />
+<p class="caption"><strong>Fig. 1</strong> <em>Density plot showing snowshoe hare weight distrubutions per year, from 1998 to 2012 (left plot). Second plot shows total counted hares per year (right plot).</em></p>
+</div>
+<p>Weight distrubution for adult snowshoe hares remained relatively stable between 1998 and 2012 (Fig 1). High density of low-weight hares, likely indicating a juvenile-skewed demogaphic, often preceeded population rebounds (eg. in 2002 and 2003). However, a low-weight population in 1999 actually preceeded a significant population decline. Cyclic hare growth is characteristic of the predator-prey interaction model, where periods of high prey growth are followed by significant predator population increases, which then cause prey population decline.</p>
+<pre class="r"><code># Let&#39;s make a table of mean weights per year, with standard deviations and hare counts per year
+
+# First, select and summarize our data so it will look nice in a table
+
+hare_table &lt;- weight_yr %&gt;% 
+  select(-date) %&gt;%
+  group_by(year) %&gt;%
+  summarize(mean = round(mean(weight, na.rm = TRUE), 2),
+            stdev = round(sd(weight, na.rm = TRUE), 2),
+            n = n())
+
+# And then make a table using kableExtra
+
+hare_table &lt;- kable(hare_table,
+      col.names = c(&quot;Year&quot;, &quot;Mean (g)&quot;, &quot;Standard Deviation&quot;, &quot;Number of Observations&quot;))%&gt;%
+      kable_styling(bootstrap_options = c(&quot;striped&quot;),
+                    full_width = F) %&gt;%
+      add_header_above(header = c(&quot;Average Yearly Hare Weights&quot; = 4)) %&gt;% 
+  scroll_box(width = &quot;100%&quot;, height = &quot;200px&quot;)</code></pre>
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:200px; overflow-x: scroll; width:100%; ">
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="border-bottom:hidden; padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; position: sticky; top:0; background-color: #FFFFFF;" colspan="4">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+Average Yearly Hare Weights
+</div>
+</th>
+</tr>
+<tr>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+Year
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+Mean (g)
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+Standard Deviation
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+Number of Observations
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+1998
+</td>
+<td style="text-align:right;">
+1704.75
+</td>
+<td style="text-align:right;">
+179.61
+</td>
+<td style="text-align:right;">
+60
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+1999
+</td>
+<td style="text-align:right;">
+1250.38
+</td>
+<td style="text-align:right;">
+392.53
+</td>
+<td style="text-align:right;">
+392
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2000
+</td>
+<td style="text-align:right;">
+1376.64
+</td>
+<td style="text-align:right;">
+401.62
+</td>
+<td style="text-align:right;">
+260
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2001
+</td>
+<td style="text-align:right;">
+1390.21
+</td>
+<td style="text-align:right;">
+405.16
+</td>
+<td style="text-align:right;">
+102
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2002
+</td>
+<td style="text-align:right;">
+1201.57
+</td>
+<td style="text-align:right;">
+417.69
+</td>
+<td style="text-align:right;">
+38
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2003
+</td>
+<td style="text-align:right;">
+1212.72
+</td>
+<td style="text-align:right;">
+310.42
+</td>
+<td style="text-align:right;">
+59
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2004
+</td>
+<td style="text-align:right;">
+1472.16
+</td>
+<td style="text-align:right;">
+376.84
+</td>
+<td style="text-align:right;">
+97
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2005
+</td>
+<td style="text-align:right;">
+1269.00
+</td>
+<td style="text-align:right;">
+407.61
+</td>
+<td style="text-align:right;">
+174
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2006
+</td>
+<td style="text-align:right;">
+1364.58
+</td>
+<td style="text-align:right;">
+302.85
+</td>
+<td style="text-align:right;">
+193
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2007
+</td>
+<td style="text-align:right;">
+1371.70
+</td>
+<td style="text-align:right;">
+346.12
+</td>
+<td style="text-align:right;">
+203
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2008
+</td>
+<td style="text-align:right;">
+1317.25
+</td>
+<td style="text-align:right;">
+395.38
+</td>
+<td style="text-align:right;">
+351
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2009
+</td>
+<td style="text-align:right;">
+1337.73
+</td>
+<td style="text-align:right;">
+272.28
+</td>
+<td style="text-align:right;">
+491
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2010
+</td>
+<td style="text-align:right;">
+1392.84
+</td>
+<td style="text-align:right;">
+251.94
+</td>
+<td style="text-align:right;">
+402
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2011
+</td>
+<td style="text-align:right;">
+1403.96
+</td>
+<td style="text-align:right;">
+274.70
+</td>
+<td style="text-align:right;">
+427
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2012
+</td>
+<td style="text-align:right;">
+1327.38
+</td>
+<td style="text-align:right;">
+230.99
+</td>
+<td style="text-align:right;">
+131
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Table 1</strong> <em>Mean hare weights, standard deviation, and observations by year.</em></p>
+</div>
+<div id="citations" class="section level3">
+<h3>Citations:</h3>
+<p>Kielland, Knut; Chapin, F. Stuart; Ruess, Roger W. 2017. Snowshoe hare physical data in Bonanza Creek Experimental Forest: 1999-Present, Bonanza Creek LTER - University of Alaska Fairbanks. BNZ:55, <a href="http://www.lter.uaf.edu/data/data-detail/id/55" class="uri">http://www.lter.uaf.edu/data/data-detail/id/55</a>. <a href="doi:10.6073/pasta/03dce4856d79b91557d8e6ce2cbcdc14" class="uri">doi:10.6073/pasta/03dce4856d79b91557d8e6ce2cbcdc14</a></p>
+<p>Nils Chr. Stenseth, Wilhelm Falck, Ottar N. Bjørnstad, Charles J. Krebs. Population regulation in snowshoe hare and Canadian lynx: Asymmetric food web configurations between hare and lynx.
+Proceedings of the National Academy of Sciences May 1997, 94 (10) 5147-5152; DOI: 10.1073/pnas.94.10.5147</p>
+</div>
+</div>
