@@ -14,9 +14,9 @@
     
     <item>
       <title>PCA for world environmental variables</title>
-      <link>/project/pca/pca/</link>
+      <link>/project/pca/</link>
       <pubDate>Tue, 10 Mar 2020 00:00:00 +0000</pubDate>
-      <guid>/project/pca/pca/</guid>
+      <guid>/project/pca/</guid>
       <description>
 
 
@@ -108,9 +108,9 @@ ggsave(&amp;quot;env_biplot.png&amp;quot;, plot = biplot_2)&lt;/code&gt;&lt;/pre
     
     <item>
       <title>Snowshoe Hares in Bonanza Creek</title>
-      <link>/project/snowshoe_hares/my_new_project/</link>
+      <link>/project/my_new_project/</link>
       <pubDate>Thu, 09 Jan 2020 15:02:28 -0800</pubDate>
-      <guid>/project/snowshoe_hares/my_new_project/</guid>
+      <guid>/project/my_new_project/</guid>
       <description>
 &lt;script src=&#34;/rmarkdown-libs/kePrint/kePrint.js&#34;&gt;&lt;/script&gt;
 
@@ -509,9 +509,9 @@ Proceedings of the National Academy of Sciences May 1997, 94 (10) 5147-5152; DOI
     
     <item>
       <title>Steelhead Passage through Bonneville Dam, Oregon</title>
-      <link>/project/steelhead/my_new_project/</link>
+      <link>/project/my_new_project/</link>
       <pubDate>Thu, 09 Jan 2020 15:02:28 -0800</pubDate>
-      <guid>/project/steelhead/my_new_project/</guid>
+      <guid>/project/my_new_project/</guid>
       <description>
 
 
