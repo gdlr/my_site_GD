@@ -1,0 +1,23 @@
+# Theme metadata
+name = "my_theme"
+
+# Is theme light or dark?
+light = true
+
+# Palette URL http://paletton.com/#uid=75t0u0kd0kV2uJ46dtekVevqH9w
+
+# Primary
+primary = "#460C19"
+
+# Menu
+menu_primary = "#460C19"
+menu_text = "#460C19"
+menu_text_active = "#460C19"
+menu_title = "#460C19"
+
+# Backgrounds
+background = "#460C19"
+home_section_odd = "#460C19"
+home_section_even = "#460C19"
+
+font = "rose"

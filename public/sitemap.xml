@@ -23,53 +23,83 @@
   </url>
   
   <url>
-    <loc>/talk/</loc>
-    <lastmod>2030-06-01T13:00:00+00:00</lastmod>
-  </url>
-  
-  <url>
     <loc>/</loc>
     <lastmod>2030-06-01T13:00:00+00:00</lastmod>
   </url>
   
   <url>
-    <loc>/tags/awesome/</loc>
-    <lastmod>2020-01-09T15:02:28-08:00</lastmod>
+    <loc>/talk/</loc>
+    <lastmod>2030-06-01T13:00:00+00:00</lastmod>
   </url>
   
   <url>
-    <loc>/tags/cool/</loc>
-    <lastmod>2020-01-09T15:02:28-08:00</lastmod>
+    <loc>/tags/analysis/</loc>
+    <lastmod>2020-03-10T11:36:41-07:00</lastmod>
   </url>
   
   <url>
-    <loc>/project/</loc>
-    <lastmod>2020-01-09T15:02:28-08:00</lastmod>
+    <loc>/tags/pca/</loc>
+    <lastmod>2020-03-10T11:36:41-07:00</lastmod>
   </url>
   
   <url>
-    <loc>/tags/</loc>
-    <lastmod>2020-01-09T15:02:28-08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>/project/my_new_project/</loc>
-    <lastmod>2020-01-09T15:02:28-08:00</lastmod>
+    <loc>/project/pca/pca/</loc>
+    <lastmod>2020-03-10T11:36:41-07:00</lastmod>
   </url>
   
   <url>
     <loc>/post/</loc>
-    <lastmod>2019-09-05T00:00:00+00:00</lastmod>
+    <lastmod>2020-03-10T11:36:41-07:00</lastmod>
   </url>
   
   <url>
-    <loc>/post/writing-technical-content/</loc>
-    <lastmod>2019-07-12T00:00:00+00:00</lastmod>
+    <loc>/project/</loc>
+    <lastmod>2020-03-10T11:36:41-07:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/tags/</loc>
+    <lastmod>2020-03-10T11:36:41-07:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/post/lynx/lynx/</loc>
+    <lastmod>2020-03-10T11:36:41-07:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/tags/data-exploration/</loc>
+    <lastmod>2020-01-09T15:02:28-08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/tags/ridgeline-plot/</loc>
+    <lastmod>2020-01-09T15:02:28-08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/tags/season-plot/</loc>
+    <lastmod>2020-01-09T15:02:28-08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/project/snowshoe_hares/my_new_project/</loc>
+    <lastmod>2020-01-09T15:02:28-08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/project/steelhead/my_new_project/</loc>
+    <lastmod>2020-01-09T15:02:28-08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/tags/time-series/</loc>
+    <lastmod>2020-01-09T15:02:28-08:00</lastmod>
   </url>
   
   <url>
     <loc>/authors/admin/</loc>
-    <lastmod>2019-09-05T00:00:00+00:00</lastmod>
+    <lastmod>2019-04-07T00:00:00+00:00</lastmod>
   </url>
   
   <url>
@@ -84,7 +114,7 @@
   
   <url>
     <loc>/authors/</loc>
-    <lastmod>2019-09-05T00:00:00+00:00</lastmod>
+    <lastmod>2019-04-07T00:00:00+00:00</lastmod>
   </url>
   
   <url>
@@ -100,11 +130,6 @@
   <url>
     <loc>/tags/source-themes/</loc>
     <lastmod>2019-04-07T00:00:00+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>/post/jupyter/</loc>
-    <lastmod>2019-09-05T00:00:00+00:00</lastmod>
   </url>
   
   <url>
@@ -128,46 +153,6 @@
   </url>
   
   <url>
-    <loc>/tags/deep-learning/</loc>
-    <lastmod>2016-04-27T00:00:00+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>/tags/demo/</loc>
-    <lastmod>2016-04-27T00:00:00+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>/project/external-project/</loc>
-    <lastmod>2016-04-27T00:00:00+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>/project/internal-project/</loc>
-    <lastmod>2016-04-27T00:00:00+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>/tags/academic/</loc>
-    <lastmod>2019-04-17T00:00:00+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>/post/getting-started/</loc>
-    <lastmod>2019-04-17T00:00:00+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>/categories/</loc>
-    <lastmod>2019-04-17T00:00:00+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>/categories/demo/</loc>
-    <lastmod>2019-04-17T00:00:00+00:00</lastmod>
-  </url>
-  
-  <url>
     <loc>/publication_types/2/</loc>
     <lastmod>2015-09-01T00:00:00+00:00</lastmod>
   </url>
@@ -183,31 +168,6 @@
   </url>
   
   <url>
-    <loc>/post/2015-07-23-r-rmarkdown/</loc>
-    <lastmod>2015-07-23T21:13:14-05:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>/tags/plot/</loc>
-    <lastmod>2015-07-23T21:13:14-05:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>/categories/r/</loc>
-    <lastmod>2015-07-23T21:13:14-05:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>/tags/r-markdown/</loc>
-    <lastmod>2015-07-23T21:13:14-05:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>/tags/regression/</loc>
-    <lastmod>2015-07-23T21:13:14-05:00</lastmod>
-  </url>
-  
-  <url>
     <loc>/publication_types/1/</loc>
     <lastmod>2013-07-01T00:00:00+00:00</lastmod>
   </url>
@@ -218,7 +178,7 @@
   </url>
   
   <url>
-    <loc>/project/awesome_project/</loc>
+    <loc>/categories/</loc>
   </url>
   
   <url>

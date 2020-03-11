@@ -1,18 +1,21 @@
 ---
 authors:
 - admin
-bio: I am Gabe.
+bio: 
 education:
   courses:
   - course: BA in Molecular and Cellular Biology
     institution: Colorado College
     year: 2016
+  - course: Masters Candidate in Environmental Science and Management
+    institution: UCSB's Bren School of Environmental Science & Management
+    year: Class of 2021
   
 email: "gdelarosa@bren.ucsb.edu"
 interests:
-- Science
-- Fun
-- Fun Science
+- Data-based conservation planning
+- Science Communication
+- Resource Management
 name: Gabriel De La Rosa
 organizations:
 - name: UCSB Bren School of Environmental Science & Management
@@ -22,20 +25,14 @@ social:
 - icon: envelope
   icon_pack: fas
   link: '#contact'
-- icon: twitter
-  icon_pack: fab
-  link: https://twitter.com/GeorgeCushen
-- icon: google-scholar
-  icon_pack: ai
-  link: https://scholar.google.co.uk/citations?user=sIwtMXoAAAAJ
 - icon: github
   icon_pack: fab
-  link: https://github.com/gcushen
+  link: https://github.com/gdlr
 superuser: true
 user_groups:
 - Researchers
 - Visitors
 ---
 
-Gabriel De La Rosa is a first year master's student at the UCSB Bren School of Environmental Science.
+Gabriel De La Rosa is a first year master's student at the UCSB Bren School of Environmental Science. He is pursuing data-driven environmental management, with a focus on data science and science communication. 
 

@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>This site is awesome!</title>
+    <title>Gabriel De La Rosa</title>
     <link>/</link>
       <atom:link href="/index.xml" rel="self" type="application/rss+xml" />
-    <description>This site is awesome!</description>
+    <description>Gabriel De La Rosa</description>
     <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator><language>en-us</language><lastBuildDate>Sat, 01 Jun 2030 13:00:00 +0000</lastBuildDate>
     <image>
       <url>/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_512x512_fill_lanczos_center_2.png</url>
-      <title>This site is awesome!</title>
+      <title>Gabriel De La Rosa</title>
       <link>/</link>
     </image>
     
@@ -75,234 +75,625 @@
     </item>
     
     <item>
-      <title>yeeeeew!</title>
-      <link>/project/my_new_project/</link>
-      <pubDate>Thu, 09 Jan 2020 00:00:00 +0000</pubDate>
-      <guid>/project/my_new_project/</guid>
+      <title>PCA for world environmental variables</title>
+      <link>/project/pca/pca/</link>
+      <pubDate>Tue, 10 Mar 2020 00:00:00 +0000</pubDate>
+      <guid>/project/pca/pca/</guid>
       <description>
 
 
-&lt;p&gt;Here’s some sweet code!&lt;/p&gt;
-&lt;p&gt;An amazing plot!&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;plot(cars)&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src=&#34;/project/my_new_project/index_files/figure-html/unnamed-chunk-1-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;div id=&#34;exploring-relationships-between-countries-environmental-variables&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Exploring relationships between countries’ environmental variables&lt;/h2&gt;
+&lt;p&gt;On a global scale, countries vary in many environmental factors, such as temperature, precipitation, and elevation. To explore correlations between nine different environmental variables, I performed a Principal Component Analysis on a dataset of environmental values by country compiled from the &lt;a href=&#34;https://earthengine.google.com/&#34;&gt;Google Earth Engine&lt;/a&gt; by &lt;a href=&#34;https://www.kaggle.com/zanderventer/environmental-variables-for-world-countries&#34;&gt;Zander Venter&lt;/a&gt;. These data are non-normalized summary statistics calculated from remote sensing data.&lt;/p&gt;
+&lt;div id=&#34;wrangling-and-data-exploration&#34; class=&#34;section level3&#34;&gt;
+&lt;h3&gt;Wrangling and data exploration&lt;/h3&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Install necessary packages. 
+
+library(tidyverse)
+library(janitor)
+library(naniar) 
+library(VIM) 
+library(skimr)
+library(ggfortify)
+library(here)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Read in the data
+
+env_data &amp;lt;- read_csv(here(&amp;quot;data&amp;quot;, &amp;quot;world_env_vars.csv&amp;quot;))
+
+# Explore the data set for missingness
+
+gg_miss_var(env_data)
+matrixplot(env_data)
+skim(env_data)
+
+#Maybe wind isn&amp;#39;t a great variable to use...55 missings. The others have just a few missing values. Tree canopy cover has 11, but I&amp;#39;ll keep it. To run PCA, you can&amp;#39;t have any NA&amp;#39;s, and I&amp;#39;d rather not have a wind variable than remove 11 full countries&amp;#39; data.
+
+# So, I&amp;#39;ll drop the wind column, and then the remaining NA&amp;#39;s
+
+env_subset &amp;lt;- env_data %&amp;gt;% 
+  select(-wind, -Country) %&amp;gt;% 
+  drop_na()
+
+# I&amp;#39;m going to pare the data down to first reduce redundancy (like mean rainfall, max quarterly rainfall) and to select just a few environmental varaibles that I think might be correlated. 
+
+# I&amp;#39;ve chosen elevation, aspect, slope, cropland cover, tree cover, isothermality (how variable a country&amp;#39;s yearly temperature fluxuations are), annual rainfall, annual temperature, and number of cloudy days.
+
+env_subset_2 &amp;lt;- env_subset %&amp;gt;% 
+  select(elevation, aspect, slope, cropland_cover, tree_canopy_cover, isothermality, rain_mean_annual, temp_mean_annual, cloudiness) %&amp;gt;% 
+  rename(&amp;quot;cropland cover&amp;quot; = cropland_cover,
+         &amp;quot;tree canopy cover&amp;quot; = tree_canopy_cover,
+         &amp;quot;annual mean rainfall&amp;quot; = rain_mean_annual,
+         &amp;quot;annual mean temperature&amp;quot; = temp_mean_annual)&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div id=&#34;running-a-principal-component-analysis-for-a-select-few-variables&#34; class=&#34;section level3&#34;&gt;
+&lt;h3&gt;Running a Principal Component Analysis for a select few variables:&lt;/h3&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# And I can now run a PCA
+
+env_pca_2 &amp;lt;- prcomp(env_subset_2, scale = TRUE)
+
+env_pca_2
+
+screeplot(env_pca_2)
+
+# And visualize it...
+
+biplot_2 &amp;lt;- autoplot(env_pca_2,
+                      colour = NA,
+                      loadings.label = TRUE,
+                      loadings.label.size = 3,
+                      loadings.label.colour = &amp;quot;black&amp;quot;,
+                      loadings.label.repel = TRUE) +
+  scale_y_continuous(limits = c(-0.2, 0.2)) +
+  scale_x_continuous(limits = c(-0.15,0.1)) +
+  theme_bw() +
+  labs(title = &amp;quot;Principal Component Analysis of Environmental Variables&amp;quot;)
+
+biplot_2
+
+ggsave(&amp;quot;env_biplot.png&amp;quot;, plot = biplot_2)&lt;/code&gt;&lt;/pre&gt;
+&lt;div class=&#34;figure&#34;&gt;
+&lt;img src=&#34;/img/env_biplot.png&#34; alt=&#34;Fig. 1 Principal component analysis comparing country’s mean elevation, mean slope, percent cropland cover, percent tree cover,yearly temperature variability (isothermality), mean annual rainfall, mean annual temperature, and average cloudy days per year. Principal components 1 and 2 explain 58% of variance in the data&#34; /&gt;
+&lt;p class=&#34;caption&#34;&gt;&lt;strong&gt;Fig. 1&lt;/strong&gt; &lt;em&gt;Principal component analysis comparing country’s mean elevation, mean slope, percent cropland cover, percent tree cover,yearly temperature variability (isothermality), mean annual rainfall, mean annual temperature, and average cloudy days per year. Principal components 1 and 2 explain 58% of variance in the data&lt;/em&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;p&gt;A principal component analysis reveals a few revealing correlations:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;annual mean temperature is strongly negatively correlated with elevation&lt;/li&gt;
+&lt;li&gt;the percentage of a country covered by cropland is negatively correlated with isothermality&lt;/li&gt;
+&lt;li&gt;cloudiness, tree canopy cover, and mean rainfall are positively correlated&lt;/li&gt;
+&lt;li&gt;elevation and cropland cover are somewhat positively correlated&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Though interesting, these data are somewhat problematic: country size varies greatly on a global scale, and environmental conditions vary widely within larger countries. Binning countries by size or breaking down larger countries into smaller regions may better elucidate correlations between other variables.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
 </description>
     </item>
     
     <item>
-      <title>Writing technical content in Academic</title>
-      <link>/post/writing-technical-content/</link>
-      <pubDate>Fri, 12 Jul 2019 00:00:00 +0000</pubDate>
-      <guid>/post/writing-technical-content/</guid>
-      <description>&lt;p&gt;Academic is designed to give technical content creators a seamless experience. You can focus on the content and Academic handles the rest.&lt;/p&gt;
-&lt;p&gt;&lt;strong&gt;Highlight your code snippets, take notes on math classes, and draw diagrams from textual representation.&lt;/strong&gt;&lt;/p&gt;
-&lt;p&gt;On this page, you&#39;ll find some examples of the types of technical content that can be rendered with Academic.&lt;/p&gt;
-&lt;h2 id=&#34;examples&#34;&gt;Examples&lt;/h2&gt;
-&lt;h3 id=&#34;code&#34;&gt;Code&lt;/h3&gt;
-&lt;p&gt;Academic supports a Markdown extension for highlighting code syntax. You can enable this feature by toggling the &lt;code&gt;highlight&lt;/code&gt; option in your &lt;code&gt;config/_default/params.toml&lt;/code&gt; file.&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;```python
-import pandas as pd
-data = pd.read_csv(&amp;quot;data.csv&amp;quot;)
-data.head()
-```
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;renders as&lt;/p&gt;
-&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;import pandas as pd
-data = pd.read_csv(&amp;quot;data.csv&amp;quot;)
-data.head()
-&lt;/code&gt;&lt;/pre&gt;
-&lt;h3 id=&#34;math&#34;&gt;Math&lt;/h3&gt;
-&lt;p&gt;Academic supports a Markdown extension for $\LaTeX$ math. You can enable this feature by toggling the &lt;code&gt;math&lt;/code&gt; option in your &lt;code&gt;config/_default/params.toml&lt;/code&gt; file.&lt;/p&gt;
-&lt;p&gt;To render &lt;em&gt;inline&lt;/em&gt; or &lt;em&gt;block&lt;/em&gt; math, wrap your LaTeX math with &lt;code&gt;$...$&lt;/code&gt; or &lt;code&gt;$$...$$&lt;/code&gt;, respectively.&lt;/p&gt;
-&lt;p&gt;Example &lt;strong&gt;math block&lt;/strong&gt;:&lt;/p&gt;
-&lt;pre&gt;&lt;code class=&#34;language-tex&#34;&gt;$$\gamma_{n} = \frac{ 
-\left | \left (\mathbf x_{n} - \mathbf x_{n-1} \right )^T 
-\left [\nabla F (\mathbf x_{n}) - \nabla F (\mathbf x_{n-1}) \right ] \right |}
-{\left \|\nabla F(\mathbf{x}_{n}) - \nabla F(\mathbf{x}_{n-1}) \right \|^2}$$
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;renders as&lt;/p&gt;
-&lt;p&gt;$$\gamma_{n} = \frac{ \left | \left (\mathbf x_{n} - \mathbf x_{n-1} \right )^T \left [\nabla F (\mathbf x_{n}) - \nabla F (\mathbf x_{n-1}) \right ] \right |}{\left |\nabla F(\mathbf{x}_{n}) - \nabla F(\mathbf{x}_{n-1}) \right |^2}$$&lt;/p&gt;
-&lt;p&gt;Example &lt;strong&gt;inline math&lt;/strong&gt; &lt;code&gt;$\nabla F(\mathbf{x}_{n})$&lt;/code&gt; renders as $\nabla F(\mathbf{x}_{n})$.&lt;/p&gt;
-&lt;p&gt;Example &lt;strong&gt;multi-line math&lt;/strong&gt; using the &lt;code&gt;\\&lt;/code&gt; math linebreak:&lt;/p&gt;
-&lt;pre&gt;&lt;code class=&#34;language-tex&#34;&gt;$$f(k;p_0^*) = \begin{cases} p_0^* &amp;amp; \text{if }k=1, \\
-1-p_0^* &amp;amp; \text {if }k=0.\end{cases}$$
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;renders as&lt;/p&gt;
-&lt;p&gt;$$f(k;p_0^*) = \begin{cases} p_0^* &amp;amp; \text{if }k=1, \&lt;br&gt;
-1-p_0^* &amp;amp; \text {if }k=0.\end{cases}$$&lt;/p&gt;
-&lt;h3 id=&#34;diagrams&#34;&gt;Diagrams&lt;/h3&gt;
-&lt;p&gt;Academic supports a Markdown extension for diagrams. You can enable this feature by toggling the &lt;code&gt;diagram&lt;/code&gt; option in your &lt;code&gt;config/_default/params.toml&lt;/code&gt; file or by adding &lt;code&gt;diagram: true&lt;/code&gt; to your page front matter.&lt;/p&gt;
-&lt;p&gt;An example &lt;strong&gt;flowchart&lt;/strong&gt;:&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;```mermaid
-graph TD
-A[Hard] --&amp;gt;|Text| B(Round)
-B --&amp;gt; C{Decision}
-C --&amp;gt;|One| D[Result 1]
-C --&amp;gt;|Two| E[Result 2]
-```
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;renders as&lt;/p&gt;
-&lt;pre&gt;&lt;code class=&#34;language-mermaid&#34;&gt;graph TD
-A[Hard] --&amp;gt;|Text| B(Round)
-B --&amp;gt; C{Decision}
-C --&amp;gt;|One| D[Result 1]
-C --&amp;gt;|Two| E[Result 2]
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;An example &lt;strong&gt;sequence diagram&lt;/strong&gt;:&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;```mermaid
-sequenceDiagram
-Alice-&amp;gt;&amp;gt;John: Hello John, how are you?
-loop Healthcheck
-    John-&amp;gt;&amp;gt;John: Fight against hypochondria
-end
-Note right of John: Rational thoughts!
-John--&amp;gt;&amp;gt;Alice: Great!
-John-&amp;gt;&amp;gt;Bob: How about you?
-Bob--&amp;gt;&amp;gt;John: Jolly good!
-```
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;renders as&lt;/p&gt;
-&lt;pre&gt;&lt;code class=&#34;language-mermaid&#34;&gt;sequenceDiagram
-Alice-&amp;gt;&amp;gt;John: Hello John, how are you?
-loop Healthcheck
-    John-&amp;gt;&amp;gt;John: Fight against hypochondria
-end
-Note right of John: Rational thoughts!
-John--&amp;gt;&amp;gt;Alice: Great!
-John-&amp;gt;&amp;gt;Bob: How about you?
-Bob--&amp;gt;&amp;gt;John: Jolly good!
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;An example &lt;strong&gt;Gantt diagram&lt;/strong&gt;:&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;```mermaid
-gantt
-section Section
-Completed :done,    des1, 2014-01-06,2014-01-08
-Active        :active,  des2, 2014-01-07, 3d
-Parallel 1   :         des3, after des1, 1d
-Parallel 2   :         des4, after des1, 1d
-Parallel 3   :         des5, after des3, 1d
-Parallel 4   :         des6, after des4, 1d
-```
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;renders as&lt;/p&gt;
-&lt;pre&gt;&lt;code class=&#34;language-mermaid&#34;&gt;gantt
-section Section
-Completed :done,    des1, 2014-01-06,2014-01-08
-Active        :active,  des2, 2014-01-07, 3d
-Parallel 1   :         des3, after des1, 1d
-Parallel 2   :         des4, after des1, 1d
-Parallel 3   :         des5, after des3, 1d
-Parallel 4   :         des6, after des4, 1d
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;An example &lt;strong&gt;class diagram&lt;/strong&gt;:&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;```mermaid
-classDiagram
-Class01 &amp;lt;|-- AveryLongClass : Cool
-&amp;lt;&amp;lt;interface&amp;gt;&amp;gt; Class01
-Class09 --&amp;gt; C2 : Where am i?
-Class09 --* C3
-Class09 --|&amp;gt; Class07
-Class07 : equals()
-Class07 : Object[] elementData
-Class01 : size()
-Class01 : int chimp
-Class01 : int gorilla
-class Class10 {
-  &amp;lt;&amp;lt;service&amp;gt;&amp;gt;
-  int id
-  size()
-}
-```
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;renders as&lt;/p&gt;
-&lt;pre&gt;&lt;code class=&#34;language-mermaid&#34;&gt;classDiagram
-Class01 &amp;lt;|-- AveryLongClass : Cool
-&amp;lt;&amp;lt;interface&amp;gt;&amp;gt; Class01
-Class09 --&amp;gt; C2 : Where am i?
-Class09 --* C3
-Class09 --|&amp;gt; Class07
-Class07 : equals()
-Class07 : Object[] elementData
-Class01 : size()
-Class01 : int chimp
-Class01 : int gorilla
-class Class10 {
-  &amp;lt;&amp;lt;service&amp;gt;&amp;gt;
-  int id
-  size()
-}
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;An example &lt;strong&gt;state diagram&lt;/strong&gt;:&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;```mermaid
-stateDiagram
-[*] --&amp;gt; Still
-Still --&amp;gt; [*]
-Still --&amp;gt; Moving
-Moving --&amp;gt; Still
-Moving --&amp;gt; Crash
-Crash --&amp;gt; [*]
-```
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;renders as&lt;/p&gt;
-&lt;pre&gt;&lt;code class=&#34;language-mermaid&#34;&gt;stateDiagram
-[*] --&amp;gt; Still
-Still --&amp;gt; [*]
-Still --&amp;gt; Moving
-Moving --&amp;gt; Still
-Moving --&amp;gt; Crash
-Crash --&amp;gt; [*]
-&lt;/code&gt;&lt;/pre&gt;
-&lt;h3 id=&#34;todo-lists&#34;&gt;Todo lists&lt;/h3&gt;
-&lt;p&gt;You can even write your todo lists in Academic too:&lt;/p&gt;
-&lt;pre&gt;&lt;code class=&#34;language-markdown&#34;&gt;- [x] Write math example
-- [x] Write diagram example
-- [ ] Do something else
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;renders as&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;input checked=&#34;&#34; disabled=&#34;&#34; type=&#34;checkbox&#34;&gt;Write math example&lt;/li&gt;
-&lt;li&gt;&lt;input checked=&#34;&#34; disabled=&#34;&#34; type=&#34;checkbox&#34;&gt;Write diagram example&lt;/li&gt;
-&lt;li&gt;&lt;input disabled=&#34;&#34; type=&#34;checkbox&#34;&gt;Do something else&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h3 id=&#34;tables&#34;&gt;Tables&lt;/h3&gt;
-&lt;p&gt;Represent your data in tables:&lt;/p&gt;
-&lt;pre&gt;&lt;code class=&#34;language-markdown&#34;&gt;| First Header  | Second Header |
-| ------------- | ------------- |
-| Content Cell  | Content Cell  |
-| Content Cell  | Content Cell  |
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;renders as&lt;/p&gt;
-&lt;table&gt;
+      <title>When we ski, we scare away alpine animals. That’s putting them at risk, scientists say.</title>
+      <link>/post/lynx/lynx/</link>
+      <pubDate>Tue, 10 Mar 2020 00:00:00 +0000</pubDate>
+      <guid>/post/lynx/lynx/</guid>
+      <description>
+
+
+&lt;p&gt;&lt;strong&gt;When we ski, we scare away alpine animals. That’s putting them at risk, scientists say.&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;Gabriel De La Rosa&lt;/p&gt;
+&lt;p&gt;This past New Year’s Day, I found myself shimmying my way uphill on touring skis, trying to keep up with a spry, acclimated group of friends. We were about an hour away from Boulder, Colorado, my newfound home. I had moved here to ski, to live near the towering alpine cirques and rolling slopes of the Rocky Mountains. And here I was, a few days in, fighting the effects of altitude for a bit of wintertime adrenaline.&lt;/p&gt;
+&lt;p&gt;Not once during our New Year’s ski did I consider how our group of skiers might be disrupting alpine species. Like many of my skiing friends, I assumed backcountry recreation was an ecologically benign activity. We practice “leave no trace” principles, travel in mostly small groups, and stick to established trails. We try to leave the places we visit just as we found them.&lt;/p&gt;
+&lt;p&gt;But, despite our best efforts to limit our impact, wintertime recreation does disturb alpine fauna. New research is finding that skiing and snowmobiling are much more disruptive to certain species than previously assumed. A new study, for example, finds Canada Lynx respond negatively to increasing numbers of skiers and snowmobilers in Southern Colorado.&lt;/p&gt;
+&lt;p&gt;To understand how backcountry travel affects lynx, researchers at the Rocky Mountain Research Station outfitted recreational snowmobilers and skiers with small GPS devices through winter. They tracked lynx using GPS collars, and mapped GPS data to look for overlap, or lack thereof, of lynx and winter recreationalists.
+Researchers found that recreational backcountry travel, particularly snowmobiling, causes lynx to migrate out of otherwise suitable habitat. Habitat reduction can cause species numbers to decline.&lt;/p&gt;
+&lt;p&gt;A new risk to lynx is particularly important: their Colorado population has only recently stabilized. In 1970, Lynx were pushed to local extinction in the Rocky Mountains by overtrapping and property development in alpine areas. Amazingly, an ambitious 1999 reintroduction effort resurrected the lynx population in Southern Colorado. But, snow sports are putting this “saved” species at risk once again.
+Snowsports harm animals other than the lynx, too. Many bird populations are fragmented by skiing; their habitat is significantly reduced when mountains are turned into ski resorts. Male pine martens, a small rodent, see higher mortality near ski resorts than in the wild. Mammals, especially moose, expend unnecessary energy to avoid humans in the wilderness. Surprisingly, human powered recreation, like backcountry skiing, is more disturbing to fauna than backcountry motorsports like snowmobiling.&lt;/p&gt;
+&lt;p&gt;The findings that lynx and other animals react negatively to snow sports illustrates an important point: as human populations grow in mountain regions, and more people venture farther and farther into pristine backcountry environments, we must understand and mitigate our effects on once undisturbed species.&lt;/p&gt;
+&lt;p&gt;Knowing how wildlife responds to both urban and backcountry disturbance can help inform where public land managers decide to put infrastructure. In the backcountry, roads, trailheads, and snowmobile parks concentrate recreation to specific areas. Closer to town, ski resorts clear swaths of forest to accommodate groomed runs. New housing expands uphill and into once wild forest. New roads segment existing groves; old roads see more and more car traffic. Picking strategic locations for development can concentrate recreation to well defined areas and limit the spread of human impact on alpine environments.&lt;/p&gt;
+&lt;p&gt;We can keep skiing, and keep the lynx alive. But, we must be conscious of our impact on alpine wildlife. We must obey off limits areas and support managed access plans in wilderness areas. We can do this by listening to the research, and implementing science based management in wilderness areas. And, we must continue to leave no trace, to stick to established trails, and&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Snowshoe Hares in Bonanza Creek</title>
+      <link>/project/snowshoe_hares/my_new_project/</link>
+      <pubDate>Thu, 09 Jan 2020 15:02:28 -0800</pubDate>
+      <guid>/project/snowshoe_hares/my_new_project/</guid>
+      <description>
+&lt;script src=&#34;/rmarkdown-libs/kePrint/kePrint.js&#34;&gt;&lt;/script&gt;
+
+
+&lt;div id=&#34;exploring-snowshoe-hare-population-in-the-bonanza-creek-experimental-forest&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Exploring Snowshoe Hare population in the Bonanza Creek Experimental Forest&lt;/h2&gt;
+&lt;p&gt;Snowshoe Hares are a keystone prey species in boreal forests. Snowshoe hare population density influences the ecosystem in both bottom-up and top-down ways: hare population density is linked to both vegetation abundance and predator abundance (Stenseth et al, 1997). Here, snowshoe hare weights and population density are compared through time.&lt;/p&gt;
+&lt;p&gt;Data were obtained from the &lt;a href=&#34;https://portal.lternet.edu/nis/metadataviewer?packageid=knb-lter-bnz.55.22&#34;&gt;Bonanza Creek Experimental Forest Long Term Ecological Research Program&lt;/a&gt;.&lt;/p&gt;
+&lt;div class=&#34;figure&#34;&gt;
+&lt;img src=&#34;/img/baby_hare.jpg&#34; alt=&#34;Baby snowshoe hare. NPS Photo&#34; /&gt;
+&lt;p class=&#34;caption&#34;&gt;Baby snowshoe hare. NPS Photo&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;results&#34; class=&#34;section level3&#34;&gt;
+&lt;h3&gt;Results&lt;/h3&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Read in necessary packages
+
+library(tidyverse)
+library(janitor)
+library(lubridate)
+library(gridExtra)
+library(ggridges)
+library(naniar)
+library(ggpubr)
+library(viridis)
+library(kableExtra)
+library(here)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Read in the data
+
+snowshoe &amp;lt;- read_csv(here(&amp;quot;data&amp;quot;, &amp;quot;showshoe_lter.csv&amp;quot;)) %&amp;gt;% 
+  select(-time)
+  
+# Make dates dates, and clean up some entries
+
+snowshoe_date &amp;lt;- snowshoe %&amp;gt;% 
+  mutate(date = mdy(date)) %&amp;gt;% 
+  mutate(month = month(date)) %&amp;gt;% 
+  mutate(year = year(date)) %&amp;gt;% 
+  mutate(grid = tolower(grid)) %&amp;gt;% 
+  mutate(age = tolower(age)) %&amp;gt;% 
+  mutate(sex = tolower(sex))&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Let&amp;#39;s explore snowshoe hare weights over time
+# Select for just weight and dates
+
+weight_yr &amp;lt;- snowshoe_date %&amp;gt;% 
+  select(date, weight, year)
+
+# And, I&amp;#39;ll just explore this with a quick histogram
+
+ggplot(data = weight_yr, aes(x = weight)) +
+  geom_histogram()
+
+# And then break weight distribution down by year using a ridgeline plot
+
+weight_plot &amp;lt;- 
+ggplot(data = weight_yr, aes(x = weight, 
+                               y = fct_rev(as.factor(year)), 
+                               fill = stat(x))
+       ) +
+    
+  geom_density_ridges_gradient(scale = 3,
+                      rel_min_height = 0.01) +
+  theme_bw() +
+  
+  labs(y = &amp;quot;&amp;quot;,
+       x = &amp;quot;Weight (g)&amp;quot;) +
+  
+  theme(legend.position = &amp;quot;null&amp;quot;,
+        axis.text.x = element_text(hjust = 0.8)) +
+  
+  scale_fill_viridis() +
+  
+  scale_x_continuous(limits = c(0, 2500), 
+                     expand = c(0,0))
+  
+
+# This would be cool with a total population size plot next to it
+# Let&amp;#39;s count the observations per year
+
+year_count &amp;lt;- weight_yr %&amp;gt;% 
+  group_by(year) %&amp;gt;% 
+  count()
+
+# Then plot 
+
+year_plot &amp;lt;- 
+
+  ggplot(data = year_count, aes(x = year, y = n)) +
+  geom_line() +
+  
+  coord_flip() + 
+  theme_bw() +
+  scale_x_reverse(limits = c(2012.6, 1995),
+                  expand = c(0,0),
+                  breaks = seq(from = 2101, to = 1998, by = -1))+
+    
+  scale_y_continuous(breaks = c(0, 250, 500),
+                     limits = c(0, 500),
+                     expand = c(0,0)) +
+  labs(x = &amp;quot;&amp;quot;,
+       y = &amp;quot;Count&amp;quot;) +
+  theme(axis.text.x = element_text(hjust = 0.8))
+
+# Put the plots next to each other using ggarrange()
+
+wt_count &amp;lt;- 
+  
+ggarrange(weight_plot,
+          year_plot,
+          ncol = 2,
+          widths = c(3,1))
+
+# Then add a title using fig_annotate
+
+fig_annotate &amp;lt;- annotate_figure(wt_count,
+                top = text_grob(&amp;quot;Snowshoe hare weights and counts, 1998-2012&amp;quot;, 
+                                size = 14,
+                                face = &amp;quot;bold&amp;quot;))
+
+fig_annotate
+
+ggsave(&amp;quot;wt_fig.png&amp;quot;, plot = fig_annotate)&lt;/code&gt;&lt;/pre&gt;
+&lt;div class=&#34;figure&#34;&gt;
+&lt;img src=&#34;/img/wt_fig.png&#34; alt=&#34;Fig. 1 Density plot showing snowshoe hare weight distrubutions per year, from 1998 to 2012 (left plot). Second plot shows total counted hares per year (right plot).&#34; /&gt;
+&lt;p class=&#34;caption&#34;&gt;&lt;strong&gt;Fig. 1&lt;/strong&gt; &lt;em&gt;Density plot showing snowshoe hare weight distrubutions per year, from 1998 to 2012 (left plot). Second plot shows total counted hares per year (right plot).&lt;/em&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;p&gt;Weight distrubution for adult snowshoe hares remained relatively stable between 1998 and 2012 (Fig 1). High density of low-weight hares, likely indicating a juvenile-skewed demogaphic, often preceeded population rebounds (eg. in 2002 and 2003). However, a low-weight population in 1999 actually preceeded a significant population decline. Cyclic hare growth is characteristic of the predator-prey interaction model, where periods of high prey growth are followed by significant predator population increases, which then cause prey population decline.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Let&amp;#39;s make a table of mean weights per year, with standard deviations and hare counts per year
+
+# First, select and summarize our data so it will look nice in a table
+
+hare_table &amp;lt;- weight_yr %&amp;gt;% 
+  select(-date) %&amp;gt;%
+  group_by(year) %&amp;gt;%
+  summarize(mean = round(mean(weight, na.rm = TRUE), 2),
+            stdev = round(sd(weight, na.rm = TRUE), 2),
+            n = n())
+
+# And then make a table using kableExtra
+
+hare_table &amp;lt;- kable(hare_table,
+      col.names = c(&amp;quot;Year&amp;quot;, &amp;quot;Mean (g)&amp;quot;, &amp;quot;Standard Deviation&amp;quot;, &amp;quot;Number of Observations&amp;quot;))%&amp;gt;%
+      kable_styling(bootstrap_options = c(&amp;quot;striped&amp;quot;),
+                    full_width = F) %&amp;gt;%
+      add_header_above(header = c(&amp;quot;Average Yearly Hare Weights&amp;quot; = 4)) %&amp;gt;% 
+  scroll_box(width = &amp;quot;100%&amp;quot;, height = &amp;quot;200px&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
+&lt;div style=&#34;border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:200px; overflow-x: scroll; width:100%; &#34;&gt;
+&lt;table class=&#34;table table-striped&#34; style=&#34;width: auto !important; margin-left: auto; margin-right: auto;&#34;&gt;
 &lt;thead&gt;
 &lt;tr&gt;
-&lt;th&gt;First Header&lt;/th&gt;
-&lt;th&gt;Second Header&lt;/th&gt;
+&lt;th style=&#34;border-bottom:hidden; padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; position: sticky; top:0; background-color: #FFFFFF;&#34; colspan=&#34;4&#34;&gt;
+&lt;div style=&#34;border-bottom: 1px solid #ddd; padding-bottom: 5px; &#34;&gt;
+Average Yearly Hare Weights
+&lt;/div&gt;
+&lt;/th&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;th style=&#34;text-align:right;position: sticky; top:0; background-color: #FFFFFF;&#34;&gt;
+Year
+&lt;/th&gt;
+&lt;th style=&#34;text-align:right;position: sticky; top:0; background-color: #FFFFFF;&#34;&gt;
+Mean (g)
+&lt;/th&gt;
+&lt;th style=&#34;text-align:right;position: sticky; top:0; background-color: #FFFFFF;&#34;&gt;
+Standard Deviation
+&lt;/th&gt;
+&lt;th style=&#34;text-align:right;position: sticky; top:0; background-color: #FFFFFF;&#34;&gt;
+Number of Observations
+&lt;/th&gt;
 &lt;/tr&gt;
 &lt;/thead&gt;
 &lt;tbody&gt;
 &lt;tr&gt;
-&lt;td&gt;Content Cell&lt;/td&gt;
-&lt;td&gt;Content Cell&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1998
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1704.75
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+179.61
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+60
+&lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;
-&lt;td&gt;Content Cell&lt;/td&gt;
-&lt;td&gt;Content Cell&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1999
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1250.38
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+392.53
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+392
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2000
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1376.64
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+401.62
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+260
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2001
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1390.21
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+405.16
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+102
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2002
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1201.57
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+417.69
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+38
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2003
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1212.72
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+310.42
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+59
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2004
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1472.16
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+376.84
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+97
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2005
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1269.00
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+407.61
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+174
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2006
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1364.58
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+302.85
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+193
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2007
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1371.70
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+346.12
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+203
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2008
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1317.25
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+395.38
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+351
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2009
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1337.73
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+272.28
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+491
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2010
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1392.84
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+251.94
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+402
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2011
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1403.96
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+274.70
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+427
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+2012
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+1327.38
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+230.99
+&lt;/td&gt;
+&lt;td style=&#34;text-align:right;&#34;&gt;
+131
+&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/tbody&gt;
 &lt;/table&gt;
-&lt;h3 id=&#34;asides&#34;&gt;Asides&lt;/h3&gt;
-&lt;p&gt;Academic supports a &lt;a href=&#34;https://sourcethemes.com/academic/docs/writing-markdown-latex/#alerts&#34;&gt;shortcode for asides&lt;/a&gt;, also referred to as &lt;em&gt;notices&lt;/em&gt;, &lt;em&gt;hints&lt;/em&gt;, or &lt;em&gt;alerts&lt;/em&gt;. By wrapping a paragraph in &lt;code&gt;{{% alert note %}} ... {{% /alert %}}&lt;/code&gt;, it will render as an aside.&lt;/p&gt;
-&lt;pre&gt;&lt;code class=&#34;language-markdown&#34;&gt;{{% alert note %}}
-A Markdown aside is useful for displaying notices, hints, or definitions to your readers.
-{{% /alert %}}
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;renders as&lt;/p&gt;
-&lt;div class=&#34;alert alert-note&#34;&gt;
-  &lt;div&gt;
-    A Markdown aside is useful for displaying notices, hints, or definitions to your readers.
-  &lt;/div&gt;
 &lt;/div&gt;
-&lt;h3 id=&#34;did-you-find-this-page-helpful-consider-sharing-it-&#34;&gt;Did you find this page helpful? Consider sharing it 🙌&lt;/h3&gt;
+&lt;p&gt;&lt;strong&gt;Table 1&lt;/strong&gt; &lt;em&gt;Mean hare weights, standard deviation, and observations by year.&lt;/em&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;citations&#34; class=&#34;section level3&#34;&gt;
+&lt;h3&gt;Citations:&lt;/h3&gt;
+&lt;p&gt;Kielland, Knut; Chapin, F. Stuart; Ruess, Roger W. 2017. Snowshoe hare physical data in Bonanza Creek Experimental Forest: 1999-Present, Bonanza Creek LTER - University of Alaska Fairbanks. BNZ:55, &lt;a href=&#34;http://www.lter.uaf.edu/data/data-detail/id/55&#34; class=&#34;uri&#34;&gt;http://www.lter.uaf.edu/data/data-detail/id/55&lt;/a&gt;. &lt;a href=&#34;doi:10.6073/pasta/03dce4856d79b91557d8e6ce2cbcdc14&#34; class=&#34;uri&#34;&gt;doi:10.6073/pasta/03dce4856d79b91557d8e6ce2cbcdc14&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Nils Chr. Stenseth, Wilhelm Falck, Ottar N. Bjørnstad, Charles J. Krebs. Population regulation in snowshoe hare and Canadian lynx: Asymmetric food web configurations between hare and lynx.
+Proceedings of the National Academy of Sciences May 1997, 94 (10) 5147-5152; DOI: 10.1073/pnas.94.10.5147&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Steelhead Passage through Bonneville Dam, Oregon</title>
+      <link>/project/steelhead/my_new_project/</link>
+      <pubDate>Thu, 09 Jan 2020 15:02:28 -0800</pubDate>
+      <guid>/project/steelhead/my_new_project/</guid>
+      <description>
+
+
+&lt;div id=&#34;introduction&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Introduction&lt;/h2&gt;
+&lt;p&gt;Bonneville Dam, Oregon has collected 80 years of steelhead counts from its fish ladder, beginning in 1939. Steelhead are sea run rainbow trout (&lt;em&gt;Oncorhynhus mykiss&lt;/em&gt;), and were significantly affected by dam development and river alteration in the 20th century. Here, I explore counts of the endangered species over all years for the Bonneville Dam.&lt;/p&gt;
+&lt;p&gt;Data was provided by the &lt;a href=&#34;http://www.cbr.washington.edu/dart/metadata/adult&#34;&gt;University of Washington DART&lt;/a&gt; program, and collected by the &lt;a href=&#34;https://www.nwd.usace.army.mil/&#34;&gt;Army Corps of Engineers&lt;/a&gt;.&lt;/p&gt;
+&lt;div class=&#34;figure&#34;&gt;
+&lt;img src=&#34;/img/steelhead.jpg&#34; alt=&#34;Steelhead trout. Photo: NOAA Fisheries&#34; /&gt;
+&lt;p class=&#34;caption&#34;&gt;Steelhead trout. Photo: NOAA Fisheries&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&#34;figure&#34;&gt;
+&lt;img src=&#34;/img/bon_dam.jpg&#34; alt=&#34;Bonneville Dam,Oregon. Photo: Richard Walker&#34; /&gt;
+&lt;p class=&#34;caption&#34;&gt;Bonneville Dam,Oregon. Photo: Richard Walker&lt;/p&gt;
+&lt;/div&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;fish &amp;lt;- read_csv(here(&amp;quot;data&amp;quot;, &amp;quot;cbr_fish_passage_bonneville_allyrs_steelhead.csv&amp;quot;)) %&amp;gt;% 
+  clean_names()&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Clean up these dates with the lubridate:: package
+fish_clean &amp;lt;- fish %&amp;gt;% 
+  mutate(day_month = str_c(fish$year, fish$mm_dd, sep = &amp;#39;-&amp;#39;)) %&amp;gt;% 
+  mutate(date = lubridate::ydm(day_month)) %&amp;gt;% 
+  mutate(year = lubridate::year(date)) %&amp;gt;% 
+  mutate(month = lubridate::month(date, label = TRUE)) %&amp;gt;% 
+  drop_na()&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;daily_ct &amp;lt;- ggplot(data = fish_clean, aes(x = date, y = value)) +
+  geom_line() +
+  theme_bw() +
+  scale_x_date(expand = c(0,0)) +
+  scale_y_continuous(expand = c(0,0), limits = c(0, 35000)) +
+  labs(title = &amp;quot;Daily Steelhead count data, Bonneville Dam&amp;quot;, x = &amp;quot;Year&amp;quot;, y = &amp;quot;Count&amp;quot;)
+
+ggsave(&amp;quot;daily_ct.png&amp;quot;, plot = daily_ct)&lt;/code&gt;&lt;/pre&gt;
+&lt;div class=&#34;figure&#34;&gt;
+&lt;img src=&#34;/img/daily_ct.png&#34; alt=&#34;Fig. 1 Daily counts for steelhead at the Bonneville Dam for all years.&#34; /&gt;
+&lt;p class=&#34;caption&#34;&gt;&lt;strong&gt;Fig. 1&lt;/strong&gt; &lt;em&gt;Daily counts for steelhead at the Bonneville Dam for all years.&lt;/em&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;p&gt;A plot of daily counts over the whole time frame suggests that steelhead passage is seasonal.Each year appears to have a spike where steelhead migration is high. We can explore seasonality in a season plot:&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# First, make a summary data frame with total counts per date and parsed year and month
+
+fish_count &amp;lt;- fish_clean %&amp;gt;% 
+  group_by(date) %&amp;gt;% 
+  summarize(value = sum(value)) %&amp;gt;% 
+  mutate(year = year(date),
+         month = month(date, label = TRUE)) %&amp;gt;% 
+  mutate(month_sep = str_c(year, month, sep = &amp;#39;-&amp;#39;)) %&amp;gt;% 
+  mutate(y_m = tsibble::yearmonth(month_sep))
+
+## Let&amp;#39;s take monthly means so it&amp;#39;s clearer...
+
+fish_sum &amp;lt;- fish_count %&amp;gt;% 
+  group_by(year, month) %&amp;gt;% 
+  summarize(value = sum(value)) %&amp;gt;% 
+  mutate(month_sep = str_c(year, month, sep = &amp;#39;-&amp;#39;)) %&amp;gt;% 
+  mutate(y_m = tsibble::yearmonth(month_sep))
+
+# Then, plot it as a season plot!
+
+season_plot &amp;lt;- ggplot(data = fish_sum, aes(x = month, y = value, group = year)) +
+  geom_line(aes(color = year)) +
+  
+  scale_color_continuous(low = &amp;quot;blue&amp;quot;, high = &amp;quot;red&amp;quot;) +
+  
+  scale_x_discrete(expand = c(0,0)) +
+  scale_y_continuous(limits = c(0,400000), expand = c(0,0)) +
+  
+  theme_bw() +
+  labs(title = &amp;quot;Season plot for Steelhead counts&amp;quot;, 
+       x = &amp;quot;Month&amp;quot;, 
+       y = &amp;quot;Count&amp;quot;,
+       color = &amp;quot;Year&amp;quot;)
+
+ggsave(&amp;quot;season.png&amp;quot;, plot = season_plot)&lt;/code&gt;&lt;/pre&gt;
+&lt;div class=&#34;figure&#34;&gt;
+&lt;img src=&#34;/img/season.png&#34; alt=&#34;Fig 2. Season plot for steelhead counts. Each line represents one year of data. Counts are total counts per month. Data from 1939-2019.&#34; /&gt;
+&lt;p class=&#34;caption&#34;&gt;&lt;strong&gt;Fig 2.&lt;/strong&gt; &lt;em&gt;Season plot for steelhead counts. Each line represents one year of data. Counts are total counts per month. Data from 1939-2019.&lt;/em&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;p&gt;A season plot shows that steelhead pass through the Bonneville Dam mainly during summer months. It also indicates that steelhead counts have changed through the years, and seem more abundant recently. We can explore this by plotting yearly counts:&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# What about annual counts?
+
+fish_ann &amp;lt;- fish_count %&amp;gt;%
+  group_by(year) %&amp;gt;% 
+  summarize(count = sum(value))
+
+ann_ct &amp;lt;- ggplot(fish_ann, aes(x = year, y = count)) +
+  geom_line() +
+  theme_bw() +
+  labs(title = &amp;quot;Changes in annual steelhead counts&amp;quot;,
+       x = &amp;quot;Year&amp;quot;, y = &amp;quot;Count&amp;quot;) +
+  scale_x_continuous(expand = c(0,0))
+
+ggsave(&amp;quot;ann_ct.png&amp;quot;, plot = ann_ct)&lt;/code&gt;&lt;/pre&gt;
+&lt;div class=&#34;figure&#34;&gt;
+&lt;img src=&#34;/img/ann_ct.png&#34; alt=&#34;Fig 3. Total steelhead counts per year&#34; /&gt;
+&lt;p class=&#34;caption&#34;&gt;&lt;strong&gt;Fig 3.&lt;/strong&gt; &lt;em&gt;Total steelhead counts per year&lt;/em&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;p&gt;This plot shows that steelhead numbers have, in general, increased through time.&lt;/p&gt;
+&lt;/div&gt;
 </description>
     </item>
     
@@ -317,50 +708,6 @@ A Markdown aside is useful for displaying notices, hints, or definitions to your
   &lt;/div&gt;
 &lt;/div&gt;
 &lt;p&gt;Supplementary notes can be added here, including &lt;a href=&#34;https://sourcethemes.com/academic/docs/writing-markdown-latex/&#34;&gt;code and math&lt;/a&gt;.&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Display Jupyter Notebooks with Academic</title>
-      <link>/post/jupyter/</link>
-      <pubDate>Tue, 05 Feb 2019 00:00:00 +0000</pubDate>
-      <guid>/post/jupyter/</guid>
-      <description>&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;from IPython.core.display import Image
-Image(&#39;https://www.python.org/static/community_logos/python-logo-master-v3-TM-flattened.png&#39;)
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src=&#34;./index_1_0.png&#34; alt=&#34;png&#34;&gt;&lt;/p&gt;
-&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;print(&amp;quot;Welcome to Academic!&amp;quot;)
-&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;Welcome to Academic!
-&lt;/code&gt;&lt;/pre&gt;
-&lt;h2 id=&#34;install-python-and-jupyterlab&#34;&gt;Install Python and JupyterLab&lt;/h2&gt;
-&lt;p&gt;&lt;a href=&#34;https://www.anaconda.com/distribution/#download-section&#34;&gt;Install Anaconda&lt;/a&gt; which includes Python 3 and JupyterLab.&lt;/p&gt;
-&lt;p&gt;Alternatively, install JupyterLab with &lt;code&gt;pip3 install jupyterlab&lt;/code&gt;.&lt;/p&gt;
-&lt;h2 id=&#34;create-or-upload-a-jupyter-notebook&#34;&gt;Create or upload a Jupyter notebook&lt;/h2&gt;
-&lt;p&gt;Run the following commands in your Terminal, substituting &lt;code&gt;&amp;lt;MY-WEBSITE-FOLDER&amp;gt;&lt;/code&gt; and &lt;code&gt;&amp;lt;SHORT-POST-TITLE&amp;gt;&lt;/code&gt; with the file path to your Academic website folder and a short title for your blog post (use hyphens instead of spaces), respectively:&lt;/p&gt;
-&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;mkdir -p &amp;lt;MY-WEBSITE-FOLDER&amp;gt;/content/post/&amp;lt;SHORT-POST-TITLE&amp;gt;/
-cd &amp;lt;MY-WEBSITE-FOLDER&amp;gt;/content/post/&amp;lt;SHORT-POST-TITLE&amp;gt;/
-jupyter lab index.ipynb
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;The &lt;code&gt;jupyter&lt;/code&gt; command above will launch the JupyterLab editor, allowing us to add Academic metadata and write the content.&lt;/p&gt;
-&lt;h2 id=&#34;edit-your-post-metadata&#34;&gt;Edit your post metadata&lt;/h2&gt;
-&lt;p&gt;The first cell of your Jupter notebook will contain your post metadata (&lt;a href=&#34;https://sourcethemes.com/academic/docs/front-matter/&#34;&gt;front matter&lt;/a&gt;).&lt;/p&gt;
-&lt;p&gt;In Jupter, choose &lt;em&gt;Markdown&lt;/em&gt; as the type of the first cell and wrap your Academic metadata in three dashes, indicating that it is YAML front matter:&lt;/p&gt;
-&lt;pre&gt;&lt;code&gt;---
-title: My post&#39;s title
-date: 2019-09-01
-
-# Put any other Academic metadata here...
----
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;Edit the metadata of your post, using the &lt;a href=&#34;https://sourcethemes.com/academic/docs/managing-content&#34;&gt;documentation&lt;/a&gt; as a guide to the available options.&lt;/p&gt;
-&lt;p&gt;To set a &lt;a href=&#34;https://sourcethemes.com/academic/docs/managing-content/#featured-image&#34;&gt;featured image&lt;/a&gt;, place an image named &lt;code&gt;featured&lt;/code&gt; into your post&#39;s folder.&lt;/p&gt;
-&lt;p&gt;For other tips, such as using math, see the guide on &lt;a href=&#34;https://sourcethemes.com/academic/docs/writing-markdown-latex/&#34;&gt;writing content with Academic&lt;/a&gt;.&lt;/p&gt;
-&lt;h2 id=&#34;convert-notebook-to-markdown&#34;&gt;Convert notebook to Markdown&lt;/h2&gt;
-&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;jupyter nbconvert index.ipynb --to markdown --NbConvertApp.output_files_dir=.
-&lt;/code&gt;&lt;/pre&gt;
-&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
-&lt;p&gt;This post was created with Jupyter. The orginal files can be found at &lt;a href=&#34;https://github.com/gcushen/hugo-academic/tree/master/exampleSite/content/post/jupyter&#34;&gt;https://github.com/gcushen/hugo-academic/tree/master/exampleSite/content/post/jupyter&lt;/a&gt;&lt;/p&gt;
 </description>
     </item>
     
@@ -511,125 +858,6 @@ Three
     </item>
     
     <item>
-      <title>External Project</title>
-      <link>/project/external-project/</link>
-      <pubDate>Wed, 27 Apr 2016 00:00:00 +0000</pubDate>
-      <guid>/project/external-project/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>Internal Project</title>
-      <link>/project/internal-project/</link>
-      <pubDate>Wed, 27 Apr 2016 00:00:00 +0000</pubDate>
-      <guid>/project/internal-project/</guid>
-      <description>&lt;p&gt;Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis posuere tellus ac convallis placerat. Proin tincidunt magna sed ex sollicitudin condimentum. Sed ac faucibus dolor, scelerisque sollicitudin nisi. Cras purus urna, suscipit quis sapien eu, pulvinar tempor diam. Quisque risus orci, mollis id ante sit amet, gravida egestas nisl. Sed ac tempus magna. Proin in dui enim. Donec condimentum, sem id dapibus fringilla, tellus enim condimentum arcu, nec volutpat est felis vel metus. Vestibulum sit amet erat at nulla eleifend gravida.&lt;/p&gt;
-&lt;p&gt;Nullam vel molestie justo. Curabitur vitae efficitur leo. In hac habitasse platea dictumst. Sed pulvinar mauris dui, eget varius purus congue ac. Nulla euismod, lorem vel elementum dapibus, nunc justo porta mi, sed tempus est est vel tellus. Nam et enim eleifend, laoreet sem sit amet, elementum sem. Morbi ut leo congue, maximus velit ut, finibus arcu. In et libero cursus, rutrum risus non, molestie leo. Nullam congue quam et volutpat malesuada. Sed risus tortor, pulvinar et dictum nec, sodales non mi. Phasellus lacinia commodo laoreet. Nam mollis, erat in feugiat consectetur, purus eros egestas tellus, in auctor urna odio at nibh. Mauris imperdiet nisi ac magna convallis, at rhoncus ligula cursus.&lt;/p&gt;
-&lt;p&gt;Cras aliquam rhoncus ipsum, in hendrerit nunc mattis vitae. Duis vitae efficitur metus, ac tempus leo. Cras nec fringilla lacus. Quisque sit amet risus at ipsum pharetra commodo. Sed aliquam mauris at consequat eleifend. Praesent porta, augue sed viverra bibendum, neque ante euismod ante, in vehicula justo lorem ac eros. Suspendisse augue libero, venenatis eget tincidunt ut, malesuada at lorem. Donec vitae bibendum arcu. Aenean maximus nulla non pretium iaculis. Quisque imperdiet, nulla in pulvinar aliquet, velit quam ultrices quam, sit amet fringilla leo sem vel nunc. Mauris in lacinia lacus.&lt;/p&gt;
-&lt;p&gt;Suspendisse a tincidunt lacus. Curabitur at urna sagittis, dictum ante sit amet, euismod magna. Sed rutrum massa id tortor commodo, vitae elementum turpis tempus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean purus turpis, venenatis a ullamcorper nec, tincidunt et massa. Integer posuere quam rutrum arcu vehicula imperdiet. Mauris ullamcorper quam vitae purus congue, quis euismod magna eleifend. Vestibulum semper vel augue eget tincidunt. Fusce eget justo sodales, dapibus odio eu, ultrices lorem. Duis condimentum lorem id eros commodo, in facilisis mauris scelerisque. Morbi sed auctor leo. Nullam volutpat a lacus quis pharetra. Nulla congue rutrum magna a ornare.&lt;/p&gt;
-&lt;p&gt;Aliquam in turpis accumsan, malesuada nibh ut, hendrerit justo. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Quisque sed erat nec justo posuere suscipit. Donec ut efficitur arcu, in malesuada neque. Nunc dignissim nisl massa, id vulputate nunc pretium nec. Quisque eget urna in risus suscipit ultricies. Pellentesque odio odio, tincidunt in eleifend sed, posuere a diam. Nam gravida nisl convallis semper elementum. Morbi vitae felis faucibus, vulputate orci placerat, aliquet nisi. Aliquam erat volutpat. Maecenas sagittis pulvinar purus, sed porta quam laoreet at.&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Academic: the website builder for Hugo</title>
-      <link>/post/getting-started/</link>
-      <pubDate>Wed, 20 Apr 2016 00:00:00 +0000</pubDate>
-      <guid>/post/getting-started/</guid>
-      <description>&lt;p&gt;&lt;strong&gt;Create a free website with Academic using Markdown, Jupyter, or RStudio. Choose a beautiful color theme and build anything with the Page Builder - over 40 &lt;em&gt;widgets&lt;/em&gt;, &lt;em&gt;themes&lt;/em&gt;, and &lt;em&gt;language packs&lt;/em&gt; included!&lt;/strong&gt;&lt;/p&gt;
-&lt;p&gt;&lt;a href=&#34;https://academic-demo.netlify.com/&#34;&gt;Check out the latest &lt;strong&gt;demo&lt;/strong&gt;&lt;/a&gt; of what you&#39;ll get in less than 10 minutes, or &lt;a href=&#34;https://sourcethemes.com/academic/#expo&#34;&gt;view the &lt;strong&gt;showcase&lt;/strong&gt;&lt;/a&gt; of personal, project, and business sites.&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;👉 &lt;a href=&#34;#install&#34;&gt;&lt;strong&gt;Get Started&lt;/strong&gt;&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;📚 &lt;a href=&#34;https://sourcethemes.com/academic/docs/&#34;&gt;View the &lt;strong&gt;documentation&lt;/strong&gt;&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;💬 &lt;a href=&#34;https://discourse.gohugo.io&#34;&gt;&lt;strong&gt;Ask a question&lt;/strong&gt; on the forum&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;👥 &lt;a href=&#34;https://spectrum.chat/academic&#34;&gt;Chat with the &lt;strong&gt;community&lt;/strong&gt;&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;🐦 Twitter: &lt;a href=&#34;https://twitter.com/source_themes&#34;&gt;@source_themes&lt;/a&gt; &lt;a href=&#34;https://twitter.com/GeorgeCushen&#34;&gt;@GeorgeCushen&lt;/a&gt; &lt;a href=&#34;https://twitter.com/search?q=%23MadeWithAcademic&amp;amp;src=typd&#34;&gt;#MadeWithAcademic&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;💡 &lt;a href=&#34;https://github.com/gcushen/hugo-academic/issues&#34;&gt;Request a &lt;strong&gt;feature&lt;/strong&gt; or report a &lt;strong&gt;bug&lt;/strong&gt;&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;⬆️ &lt;strong&gt;Updating?&lt;/strong&gt; View the &lt;a href=&#34;https://sourcethemes.com/academic/docs/update/&#34;&gt;Update Guide&lt;/a&gt; and &lt;a href=&#34;https://sourcethemes.com/academic/updates/&#34;&gt;Release Notes&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;❤ &lt;strong&gt;Support development&lt;/strong&gt; of Academic:
-&lt;ul&gt;
-&lt;li&gt;☕️ &lt;a href=&#34;https://paypal.me/cushen&#34;&gt;&lt;strong&gt;Donate a coffee&lt;/strong&gt;&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;💵 &lt;a href=&#34;https://www.patreon.com/cushen&#34;&gt;Become a backer on &lt;strong&gt;Patreon&lt;/strong&gt;&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;🖼️ &lt;a href=&#34;https://www.redbubble.com/people/neutreno/works/34387919-academic&#34;&gt;Decorate your laptop or journal with an Academic &lt;strong&gt;sticker&lt;/strong&gt;&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;👕 &lt;a href=&#34;https://academic.threadless.com/&#34;&gt;Wear the &lt;strong&gt;T-shirt&lt;/strong&gt;&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;👩‍💻 &lt;a href=&#34;https://sourcethemes.com/academic/docs/contribute/&#34;&gt;&lt;strong&gt;Contribute&lt;/strong&gt;&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;/ul&gt;
-
-
-
-
-
-
-
-
-
-
-
-
-
-&lt;figure&gt;
-
-
-  &lt;a data-fancybox=&#34;&#34; href=&#34;https://raw.githubusercontent.com/gcushen/hugo-academic/master/academic.png&#34; data-caption=&#34;Academic is mobile first with a responsive design to ensure that your site looks stunning on every device.&#34;&gt;
-&lt;img data-src=&#34;https://raw.githubusercontent.com/gcushen/hugo-academic/master/academic.png&#34; class=&#34;lazyload&#34; alt=&#34;&#34; &gt;&lt;/a&gt;
-
-
-  
-  
-  &lt;figcaption&gt;
-    Academic is mobile first with a responsive design to ensure that your site looks stunning on every device.
-  &lt;/figcaption&gt;
-
-
-&lt;/figure&gt;
-
-&lt;p&gt;&lt;strong&gt;Key features:&lt;/strong&gt;&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;Page builder&lt;/strong&gt; - Create &lt;em&gt;anything&lt;/em&gt; with &lt;a href=&#34;https://sourcethemes.com/academic/docs/page-builder/&#34;&gt;&lt;strong&gt;widgets&lt;/strong&gt;&lt;/a&gt; and &lt;a href=&#34;https://sourcethemes.com/academic/docs/writing-markdown-latex/&#34;&gt;&lt;strong&gt;elements&lt;/strong&gt;&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Edit any type of content&lt;/strong&gt; - Blog posts, publications, talks, slides, projects, and more!&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Create content&lt;/strong&gt; in &lt;a href=&#34;https://sourcethemes.com/academic/docs/writing-markdown-latex/&#34;&gt;&lt;strong&gt;Markdown&lt;/strong&gt;&lt;/a&gt;, &lt;a href=&#34;https://sourcethemes.com/academic/docs/jupyter/&#34;&gt;&lt;strong&gt;Jupyter&lt;/strong&gt;&lt;/a&gt;, or &lt;a href=&#34;https://sourcethemes.com/academic/docs/install/#install-with-rstudio&#34;&gt;&lt;strong&gt;RStudio&lt;/strong&gt;&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Plugin System&lt;/strong&gt; - Fully customizable &lt;a href=&#34;https://sourcethemes.com/academic/themes/&#34;&gt;&lt;strong&gt;color&lt;/strong&gt; and &lt;strong&gt;font themes&lt;/strong&gt;&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Display Code and Math&lt;/strong&gt; - Code highlighting and &lt;a href=&#34;https://en.wikibooks.org/wiki/LaTeX/Mathematics&#34;&gt;LaTeX math&lt;/a&gt; supported&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Integrations&lt;/strong&gt; - &lt;a href=&#34;https://analytics.google.com&#34;&gt;Google Analytics&lt;/a&gt;, &lt;a href=&#34;https://disqus.com&#34;&gt;Disqus commenting&lt;/a&gt;, Maps, Contact Forms, and more!&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Beautiful Site&lt;/strong&gt; - Simple and refreshing one page design&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Industry-Leading SEO&lt;/strong&gt; - Help get your website found on search engines and social media&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Media Galleries&lt;/strong&gt; - Display your images and videos with captions in a customizable gallery&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Mobile Friendly&lt;/strong&gt; - Look amazing on every screen with a mobile friendly version of your site&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Multi-language&lt;/strong&gt; - 15+ language packs including English, 中文, and Português&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Multi-user&lt;/strong&gt; - Each author gets their own profile page&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Privacy Pack&lt;/strong&gt; - Assists with GDPR&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Stand Out&lt;/strong&gt; - Bring your site to life with animation, parallax backgrounds, and scroll effects&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;One-Click Deployment&lt;/strong&gt; - No servers. No databases. Only files.&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h2 id=&#34;themes&#34;&gt;Themes&lt;/h2&gt;
-&lt;p&gt;Academic comes with &lt;strong&gt;automatic day (light) and night (dark) mode&lt;/strong&gt; built-in. Alternatively, visitors can  choose their preferred mode - click the sun/moon icon in the top right of the &lt;a href=&#34;https://academic-demo.netlify.com/&#34;&gt;Demo&lt;/a&gt; to see it in action! Day/night mode can also be disabled by the site admin in &lt;code&gt;params.toml&lt;/code&gt;.&lt;/p&gt;
-&lt;p&gt;&lt;a href=&#34;https://sourcethemes.com/academic/themes/&#34;&gt;Choose a stunning &lt;strong&gt;theme&lt;/strong&gt; and &lt;strong&gt;font&lt;/strong&gt;&lt;/a&gt; for your site. Themes are fully &lt;a href=&#34;https://sourcethemes.com/academic/docs/customization/#custom-theme&#34;&gt;customizable&lt;/a&gt;.&lt;/p&gt;
-&lt;h2 id=&#34;ecosystem&#34;&gt;Ecosystem&lt;/h2&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;&lt;a href=&#34;https://github.com/sourcethemes/academic-admin&#34;&gt;Academic Admin&lt;/a&gt;:&lt;/strong&gt; An admin tool to import publications from BibTeX or import assets for an offline site&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;&lt;a href=&#34;https://github.com/sourcethemes/academic-scripts&#34;&gt;Academic Scripts&lt;/a&gt;:&lt;/strong&gt; Scripts to help migrate content to new versions of Academic&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h2 id=&#34;install&#34;&gt;Install&lt;/h2&gt;
-&lt;p&gt;You can choose from one of the following four methods to install:&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;a href=&#34;https://sourcethemes.com/academic/docs/install/#install-with-web-browser&#34;&gt;&lt;strong&gt;one-click install using your web browser (recommended)&lt;/strong&gt;&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://sourcethemes.com/academic/docs/install/#install-with-git&#34;&gt;install on your computer using &lt;strong&gt;Git&lt;/strong&gt; with the Command Prompt/Terminal app&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://sourcethemes.com/academic/docs/install/#install-with-zip&#34;&gt;install on your computer by downloading the &lt;strong&gt;ZIP files&lt;/strong&gt;&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://sourcethemes.com/academic/docs/install/#install-with-rstudio&#34;&gt;install on your computer with &lt;strong&gt;RStudio&lt;/strong&gt;&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;Then &lt;a href=&#34;https://sourcethemes.com/academic/docs/get-started/&#34;&gt;personalize and deploy your new site&lt;/a&gt;.&lt;/p&gt;
-&lt;h2 id=&#34;updating&#34;&gt;Updating&lt;/h2&gt;
-&lt;p&gt;&lt;a href=&#34;https://sourcethemes.com/academic/docs/update/&#34;&gt;View the Update Guide&lt;/a&gt;.&lt;/p&gt;
-&lt;p&gt;Feel free to &lt;em&gt;star&lt;/em&gt; the project on &lt;a href=&#34;https://github.com/gcushen/hugo-academic/&#34;&gt;Github&lt;/a&gt; to help keep track of &lt;a href=&#34;https://sourcethemes.com/academic/updates&#34;&gt;updates&lt;/a&gt;.&lt;/p&gt;
-&lt;h2 id=&#34;license&#34;&gt;License&lt;/h2&gt;
-&lt;p&gt;Copyright 2016-present &lt;a href=&#34;https://georgecushen.com&#34;&gt;George Cushen&lt;/a&gt;.&lt;/p&gt;
-&lt;p&gt;Released under the &lt;a href=&#34;https://github.com/gcushen/hugo-academic/blob/master/LICENSE.md&#34;&gt;MIT&lt;/a&gt; license.&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
       <title>An example journal article</title>
       <link>/publication/journal-article/</link>
       <pubDate>Tue, 01 Sep 2015 00:00:00 +0000</pubDate>
@@ -649,56 +877,6 @@ Three
     </item>
     
     <item>
-      <title>Hello R Markdown</title>
-      <link>/post/2015-07-23-r-rmarkdown/</link>
-      <pubDate>Thu, 23 Jul 2015 21:13:14 -0500</pubDate>
-      <guid>/post/2015-07-23-r-rmarkdown/</guid>
-      <description>
-
-
-&lt;div id=&#34;r-markdown&#34; class=&#34;section level1&#34;&gt;
-&lt;h1&gt;R Markdown&lt;/h1&gt;
-&lt;p&gt;This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see &lt;a href=&#34;http://rmarkdown.rstudio.com&#34; class=&#34;uri&#34;&gt;http://rmarkdown.rstudio.com&lt;/a&gt;.&lt;/p&gt;
-&lt;p&gt;You can embed an R code chunk like this:&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;summary(cars)
-##      speed           dist       
-##  Min.   : 4.0   Min.   :  2.00  
-##  1st Qu.:12.0   1st Qu.: 26.00  
-##  Median :15.0   Median : 36.00  
-##  Mean   :15.4   Mean   : 42.98  
-##  3rd Qu.:19.0   3rd Qu.: 56.00  
-##  Max.   :25.0   Max.   :120.00
-fit &amp;lt;- lm(dist ~ speed, data = cars)
-fit
-## 
-## Call:
-## lm(formula = dist ~ speed, data = cars)
-## 
-## Coefficients:
-## (Intercept)        speed  
-##     -17.579        3.932&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
-&lt;div id=&#34;including-plots&#34; class=&#34;section level1&#34;&gt;
-&lt;h1&gt;Including Plots&lt;/h1&gt;
-&lt;p&gt;You can also embed plots. See Figure &lt;a href=&#34;#fig:pie&#34;&gt;1&lt;/a&gt; for example:&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;par(mar = c(0, 1, 0, 1))
-pie(
-  c(280, 60, 20),
-  c(&amp;#39;Sky&amp;#39;, &amp;#39;Sunny side of pyramid&amp;#39;, &amp;#39;Shady side of pyramid&amp;#39;),
-  col = c(&amp;#39;#0292D8&amp;#39;, &amp;#39;#F7EA39&amp;#39;, &amp;#39;#C4B632&amp;#39;),
-  init.angle = -50, border = NA
-)&lt;/code&gt;&lt;/pre&gt;
-&lt;div class=&#34;figure&#34;&gt;&lt;span id=&#34;fig:pie&#34;&gt;&lt;/span&gt;
-&lt;img src=&#34;/post/2015-07-23-r-rmarkdown_files/figure-html/pie-1.png&#34; alt=&#34;A fancy pie chart.&#34; width=&#34;672&#34; /&gt;
-&lt;p class=&#34;caption&#34;&gt;
-Figure 1: A fancy pie chart.
-&lt;/p&gt;
-&lt;/div&gt;
-&lt;/div&gt;
-</description>
-    </item>
-    
-    <item>
       <title>An example conference paper</title>
       <link>/publication/conference-paper/</link>
       <pubDate>Mon, 01 Jul 2013 00:00:00 +0000</pubDate>
@@ -714,36 +892,6 @@ Figure 1: A fancy pie chart.
   &lt;/div&gt;
 &lt;/div&gt;
 &lt;p&gt;Supplementary notes can be added here, including &lt;a href=&#34;https://sourcethemes.com/academic/docs/writing-markdown-latex/&#34;&gt;code and math&lt;/a&gt;.&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Awesome stuff here</title>
-      <link>/project/awesome_project/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      <guid>/project/awesome_project/</guid>
-      <description>
-
-
-&lt;div id=&#34;r-markdown&#34; class=&#34;section level2&#34;&gt;
-&lt;h2&gt;R Markdown&lt;/h2&gt;
-&lt;p&gt;This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see &lt;a href=&#34;http://rmarkdown.rstudio.com&#34; class=&#34;uri&#34;&gt;http://rmarkdown.rstudio.com&lt;/a&gt;.&lt;/p&gt;
-&lt;p&gt;When you click the &lt;strong&gt;Knit&lt;/strong&gt; button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;summary(cars)&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;##      speed           dist       
-##  Min.   : 4.0   Min.   :  2.00  
-##  1st Qu.:12.0   1st Qu.: 26.00  
-##  Median :15.0   Median : 36.00  
-##  Mean   :15.4   Mean   : 42.98  
-##  3rd Qu.:19.0   3rd Qu.: 56.00  
-##  Max.   :25.0   Max.   :120.00&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
-&lt;div id=&#34;including-plots&#34; class=&#34;section level2&#34;&gt;
-&lt;h2&gt;Including Plots&lt;/h2&gt;
-&lt;p&gt;You can also embed plots, for example:&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;/project/awesome_project/index_files/figure-html/pressure-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
-&lt;p&gt;Note that the &lt;code&gt;echo = FALSE&lt;/code&gt; parameter was added to the code chunk to prevent printing of the R code that generated the plot.&lt;/p&gt;
-&lt;/div&gt;
 </description>
     </item>
     

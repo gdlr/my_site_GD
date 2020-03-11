@@ -1,9 +1,9 @@
 {
-  "name": "This site is awesome!",
-  "short_name": "This site is awesome!",
+  "name": "Gabriel De La Rosa",
+  "short_name": "Gabriel De La Rosa",
   "lang": "en-us",
-  "theme_color": "#4caf50",
-  "background_color": "#4caf50",
+  "theme_color": "#B19671",
+  "background_color": "#B19671",
   "icons": [{
     "src": "/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_192x192_fill_lanczos_center_2.png",
     "sizes": "192x192",
