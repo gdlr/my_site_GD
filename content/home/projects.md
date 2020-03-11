@@ -26,8 +26,8 @@ subtitle = ""
     tag = "*"
   
   [[content.filter_button]]
-    name = "Communication"
-    tag = "Communication"
+    name = "Data Analysis"
+    tag = "Data Analysis"
   
   [[content.filter_button]]
     name = "Other"

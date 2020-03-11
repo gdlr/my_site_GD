@@ -28,6 +28,10 @@ social:
 - icon: github
   icon_pack: fab
   link: https://github.com/gdlr
+- icon: instagram
+  icon_pack: fab
+  link: https://www.instagram.com/gabedela/
+
 superuser: true
 user_groups:
 - Researchers
