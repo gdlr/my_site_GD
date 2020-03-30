@@ -2,7 +2,7 @@
 name = "my_theme"
 
 # Is theme light or dark?
-light = "true"
+light = true
 
 # Palette URL http://paletton.com/#uid=75t0u0kd0kV2uJ46dtekVevqH9w
 
